@@ -7,4 +7,7 @@ import (
 
 func init() {
     beego.Router("/", &controllers.MainController{})
+
+    beego.Router("/unit/create", &controllers.UnitController{}, "get:CreateHtml")
+    beego.Router("/unit/create", &controllers.UnitController{}, "post:Create")
 }

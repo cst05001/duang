@@ -1,8 +1,9 @@
 package main
 
 import (
-	_ "github.com/cst05001/duang/routers"
 	"github.com/astaxie/beego"
+	_ "github.com/cst05001/duang/routers"
+
 )
 
 func main() {
