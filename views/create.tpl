@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-	<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.0.js"></script>
+	<script src="/static/js/jquery-1.11.3.min.js"></script>
 </head>
 <body>
 	<form>
@@ -22,9 +22,10 @@
 				url: "/unit/create",
 				type: "post",
 				data: JSON.stringify(unit),
-				success: function(data, textStatus, jqXHR) {
-					alert(data);
-				}(),
+				dataType: "json",
+				success: function(data) {
+					console.log(data);
+				},
 			})	
 		});
 

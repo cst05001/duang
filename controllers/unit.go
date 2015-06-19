@@ -49,4 +49,5 @@ func (this *UnitController) Create() {
 	}
 
 	fmt.Println(unit)
+	this.Ctx.WriteString("{\"status\": \"success\"}")
 }
