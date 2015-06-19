@@ -45,3 +45,4 @@ Temporary Items
 # App
 conf/duang.conf
 *.exe
+*.exe~

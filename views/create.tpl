@@ -8,7 +8,7 @@
 		<input name="name" id="name" type="text" placeholder="name"/><br />
 		<input name="image" id="image" type="text" placeholder="image "/><br />
 		<input name="number" id="number" type="number" placeholder="number" /><br />
-		<input name="parameter" id="parameter" type="text" placeholder="parameter" /><br />
+		<input name="parameteres" id="parameteres" type="text" placeholder="parameter" /><br />
 		<input id="submit" type="button" value="submit" />
  	</form>
 	<script>
@@ -17,7 +17,7 @@
 			unit.name = $("#name").val();
 			unit.image = $("#image").val();
 			unit.number = parseInt($("#number").val());
-			unit.parameter = $("#parameter").val().split(" ");
+			unit.parameteres = $("#parameteres").val().split(" ");
 			jQuery.ajax({
 				url: "/unit/create",
 				type: "post",
