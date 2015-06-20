@@ -40,8 +40,8 @@ func (this *UnitController) Create() {
 		return
 	}
 
-	for _, v := range unit.Parameteres {
-		parameter := &models.UnitParameter{Unit: unit, Parameter: v}
+	for k, v := range unit.Parameteres {
+		parameter := &models.UnitParameter{Unit: unit, Parameter: v, Order: k}
 		_, err = o.Insert(parameter)
 		if err != nil {
 			fmt.Println(err)

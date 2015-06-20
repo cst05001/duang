@@ -13,4 +13,5 @@ type UnitParameter struct {
 	Id        int64
 	Unit      *Unit `orm:"rel(fk)"`
 	Parameter string
+	Order     int
 }
