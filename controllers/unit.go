@@ -56,12 +56,16 @@ func (this *UnitController) List() {
 	o := orm.NewOrm()
 	o.Using("default")
 	unitList := make([]models.Unit, 0)
-	_, err := o.QueryTable("unit").RelatedSel().All(&unitList)
+	_, err := o.QueryTable("unit").All(&unitList)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	for _, v := range unitList {
-		fmt.Println(v.Parameter)
+	for k, _ := range unitList {
+		o.LoadRelated(&unitList[k], "Parameter")
 	}
+
+	this.Data["UnitList"] = unitList
+	this.TplNames = "unit/list.tpl"
+	this.Render()
 }
