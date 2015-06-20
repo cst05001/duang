@@ -40,9 +40,9 @@ func (this *UnitController) Create() {
 		return
 	}
 
-	for k, v := range unit.Parameteres {
-		parameter := &models.UnitParameter{Unit: unit, Parameter: v, Order: k}
-		_, err = o.Insert(parameter)
+	for _, v := range unit.Parameteres {
+		v.Unit = unit
+		_, err = o.Insert(v)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -62,7 +62,7 @@ func (this *UnitController) List() {
 		return
 	}
 	for k, _ := range unitList {
-		o.LoadRelated(&unitList[k], "Parameter")
+		o.LoadRelated(&unitList[k], "Parameteres")
 	}
 
 	this.Data["UnitList"] = unitList
