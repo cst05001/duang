@@ -14,4 +14,8 @@ func init() {
 	beego.Router("/unit/create", &controllers.UnitController{}, "get:CreateHtml")
 	beego.Router("/unit/create", &controllers.UnitController{}, "post:Create")
 	beego.Router("/unit/list", &controllers.UnitController{}, "get:List")
+
+	beego.Router("/dockerd/create", &controllers.DockerdController{}, "get:CreateHtml")
+	beego.Router("/dockerd/create", &controllers.DockerdController{}, "post:Create")
+	beego.Router("/dockerd/list", &controllers.DockerdController{}, "get:List")
 }
