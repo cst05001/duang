@@ -6,6 +6,7 @@ type Unit struct {
 	Image       string
 	Number      uint
 	Parameteres []*UnitParameter `orm:"reverse(many);on_delete(set_null)"`
+	Dockerd     []*Dockerd       `orm:"rel(m2m)"`
 }
 
 type UnitParameter struct {
