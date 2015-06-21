@@ -6,6 +6,8 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models"
+	engine "github.com/cst05001/duang/models/dockerclienteng1"
+	"strconv"
 )
 
 type UnitController struct {
@@ -68,4 +70,27 @@ func (this *UnitController) List() {
 	this.Data["UnitList"] = unitList
 	this.TplNames = "unit/list.tpl"
 	this.Render()
+}
+
+func (this *UnitController) Run() {
+	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":unitid"))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	o := orm.NewOrm()
+	o.Using("default")
+	unit := &models.Unit{Id: int64(unitId)}
+	err = o.Read(unit)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	o.LoadRelated(unit, "Parameteres")
+
+	client := engine.NewDockerClient("tcp://192.168.119.10:2375")
+	client.CreateContainer(unit)
+	fmt.Println(unit)
 }

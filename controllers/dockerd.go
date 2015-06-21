@@ -6,7 +6,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models"
-	engine "github.com/cst05001/duang/models/dockerclienteng1"
+	//engine "github.com/cst05001/duang/models/dockerclienteng1"
 )
 
 type DockerdController struct {
@@ -58,10 +58,10 @@ func (this *DockerdController) List() {
 		o.LoadRelated(&dockerdList[k], "Unit")
 	}
 
-	// 测试代码开始
+	/*** 测试代码开始
 	client := engine.NewDockerClient("tcp://192.168.119.10:2375")
 	client.Info()
-	// 测试代码结束
+	测试代码结束 */
 
 	this.Data["DockerdList"] = dockerdList
 	this.TplNames = "dockerd/list.tpl"

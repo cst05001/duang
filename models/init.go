@@ -18,7 +18,11 @@ func init() {
 
 	orm.RegisterModel(new(Unit), new(UnitParameter), new(Dockerd))
 
-	force := true
+	force, err := duangcfg.Bool("db_dropifexist")
+	if err != nil {
+		force = false
+	}
+
 	verbose := true
 	err = orm.RunSyncdb("default", force, verbose)
 	if err != nil {

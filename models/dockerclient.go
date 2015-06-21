@@ -7,4 +7,5 @@ import (
 type dockerclient interface {
 	Version() types.Version
 	Info() types.Info
+	CreateContainer(unit *Unit)
 }
