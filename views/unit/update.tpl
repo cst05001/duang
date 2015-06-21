@@ -22,6 +22,9 @@
 		<input id="submit" type="button" value="submit" />
  	</form>
 	<script>
+		function del_parameter() {
+			$(this).parent().remove();
+		}
 		function add_parameter() {
 			$(this).parent().after('		<div class="div_parameteres"> \
 		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" /><select class="select_parameter"><option value="v">Volume</option><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" /> \
@@ -29,12 +32,12 @@
 
 			$(".btn_add_parameter").off("click");
 			$(".btn_add_parameter").on("click", add_parameter);
+			$(".btn_del_parameter").off("click");
+			$(".btn_del_parameter").on("click", del_parameter);
 		}
 		$(".btn_add_parameter").click(add_parameter);
 		
-		$(".btn_del_parameter").click(function() {
-			$(this).parent().remove();
-		});
+		$(".btn_del_parameter").click(del_parameter);
 
 		$("#submit").click(function() {
 			
