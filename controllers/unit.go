@@ -159,9 +159,12 @@ func (this *UnitController) Run() {
 	o.LoadRelated(unit, "Parameteres")
 
 	client := engine.NewDockerClient("tcp://192.168.119.10:2375")
-	containerCreateResponse := client.CreateContainer(unit)
-	fmt.Printf("CreateContainer: %v\n", containerCreateResponse)
-	err = client.StartContainer(containerCreateResponse.ID, unit)
+	/*
+		containerCreateResponse := client.CreateContainer(unit)
+		fmt.Printf("CreateContainer: %v\n", containerCreateResponse)
+		err = client.StartContainer(containerCreateResponse.ID, unit)
+	*/
+	err = client.Run(unit)
 	if err != nil {
 		fmt.Printf("Start Container Failed: %s\n", err)
 		return

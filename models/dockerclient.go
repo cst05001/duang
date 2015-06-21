@@ -7,6 +7,6 @@ import (
 type dockerclient interface {
 	Version() types.Version
 	Info() types.Info
-	CreateContainer(*Unit) types.ContainerCreateResponse
+	CreateContainer(*Unit) (types.ContainerCreateResponse, error)
 	StartContainer(string, *Unit) error
 }
