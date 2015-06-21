@@ -43,6 +43,9 @@ func (this *UnitController) Create() {
 	}
 
 	for _, v := range unit.Parameteres {
+		if len(v.Value) == 0 || len(v.Type) == 0 {
+			continue
+		}
 		v.Unit = unit
 		_, err = o.Insert(v)
 		if err != nil {
@@ -72,6 +75,71 @@ func (this *UnitController) List() {
 	this.Render()
 }
 
+func (this *UnitController) UpdateHtml() {
+	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":unitid"))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	o := orm.NewOrm()
+	o.Using("default")
+	unit := &models.Unit{Id: int64(unitId)}
+	err = o.Read(unit)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	o.LoadRelated(unit, "Parameteres")
+	this.Data["Unit"] = unit
+	this.TplNames = "unit/update.tpl"
+	this.Render()
+}
+
+func (this *UnitController) Update() {
+	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":unitid"))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	o := orm.NewOrm()
+	o.Using("default")
+
+	unit := &models.Unit{}
+	err = json.Unmarshal(this.Ctx.Input.RequestBody, unit)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	unit.Id = int64(unitId)
+
+	// 此处应支持事物，还没实现，是个 bug 要注意。
+	_, err = o.Update(unit)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	_, err = o.QueryTable("UnitParameter").Filter("unit_id", int64(unit.Id)).Delete()
+
+	for _, v := range unit.Parameteres {
+		if len(v.Value) == 0 || len(v.Type) == 0 {
+			continue
+		}
+		v.Unit = unit
+		_, err = o.Insert(v)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	// bug 结束
+	fmt.Println(unit)
+	this.Ctx.WriteString("{\"status\": \"success\"}")
+}
+
 func (this *UnitController) Run() {
 	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":unitid"))
 	if err != nil {
@@ -91,6 +159,12 @@ func (this *UnitController) Run() {
 	o.LoadRelated(unit, "Parameteres")
 
 	client := engine.NewDockerClient("tcp://192.168.119.10:2375")
-	client.CreateContainer(unit)
+	containerCreateResponse := client.CreateContainer(unit)
+	fmt.Printf("CreateContainer: %v\n", containerCreateResponse)
+	err = client.StartContainer(containerCreateResponse.ID, unit)
+	if err != nil {
+		fmt.Printf("Start Container Failed: %s\n", err)
+		return
+	}
 	fmt.Println(unit)
 }

@@ -3,10 +3,11 @@ package dockerclienteng1
 import (
 	"fmt"
 	"github.com/cst05001/duang/models"
+	"github.com/docker/docker/api/types"
 	docker "github.com/fsouza/go-dockerclient"
 )
 
-func (this *DockerClient) CreateContainer(unit *models.Unit) {
+func (this *DockerClient) CreateContainer(unit *models.Unit) types.ContainerCreateResponse {
 	hostConfig := &docker.HostConfig{}
 	for _, p := range unit.Parameteres {
 		if p.Type == "v" {
@@ -21,10 +22,29 @@ func (this *DockerClient) CreateContainer(unit *models.Unit) {
 		Config:     config,
 		HostConfig: hostConfig,
 	}
+	containerCreateResponse := &types.ContainerCreateResponse{}
 	container, err := this.Client.CreateContainer(*createContainerOptions)
 	if err != nil {
 		fmt.Println(err)
-		return
+		containerCreateResponse.Warnings = append(containerCreateResponse.Warnings, err.Error())
+		return *containerCreateResponse
 	}
 	fmt.Println(container)
+	containerCreateResponse.ID = container.ID
+	return *containerCreateResponse
+}
+
+func (this *DockerClient) StartContainer(id string, unit *models.Unit) error {
+	hostConfig := &docker.HostConfig{}
+	for _, p := range unit.Parameteres {
+		if p.Type == "v" {
+			hostConfig.Binds = append(hostConfig.Binds, p.Value)
+		}
+	}
+	err := this.Client.StartContainer(id, hostConfig)
+	if err != nil {
+		fmt.Sprintf("StartContainer: Faile with error %s\n", err)
+		return err
+	}
+	return nil
 }
