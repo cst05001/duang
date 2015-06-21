@@ -5,15 +5,19 @@ import (
 	"github.com/cst05001/duang/models"
 	"github.com/docker/docker/api/types"
 	docker "github.com/fsouza/go-dockerclient"
+	"regexp"
 )
 
 func (this *DockerClient) CreateContainer(unit *models.Unit) (types.ContainerCreateResponse, error) {
 	hostConfig := &docker.HostConfig{}
+	/* 这段代码应该是无用的
 	for _, p := range unit.Parameteres {
-		if p.Type == "v" {
+		switch p.Type {
+		case "v":
 			hostConfig.Binds = append(hostConfig.Binds, p.Value)
 		}
 	}
+	*/
 	config := &docker.Config{
 		Image: unit.Image,
 	}
@@ -37,10 +41,42 @@ func (this *DockerClient) CreateContainer(unit *models.Unit) (types.ContainerCre
 func (this *DockerClient) StartContainer(id string, unit *models.Unit) error {
 	hostConfig := &docker.HostConfig{}
 	for _, p := range unit.Parameteres {
-		if p.Type == "v" {
+		switch p.Type {
+		case "v":
 			hostConfig.Binds = append(hostConfig.Binds, p.Value)
+		case "p":
+			re3 := regexp.MustCompile("(.+):(.+):(.+)")
+			if re3.MatchString(p.Value) {
+				t := re3.FindStringSubmatch(p.Value)
+				portBinding := &docker.PortBinding{
+					HostIP:   t[1],
+					HostPort: t[2],
+				}
+				hostConfig.PortBindings = make(map[docker.Port][]docker.PortBinding)
+				hostConfig.PortBindings[docker.Port(t[3])] = append(hostConfig.PortBindings[docker.Port(t[3])], *portBinding)
+				break
+			}
+			re2 := regexp.MustCompile("(.+):(.+)")
+			if re2.MatchString(p.Value) {
+				t := re2.FindStringSubmatch(p.Value)
+				portBinding := &docker.PortBinding{
+					HostPort: t[1],
+				}
+				hostConfig.PortBindings = make(map[docker.Port][]docker.PortBinding)
+				hostConfig.PortBindings[docker.Port(t[2])] = append(hostConfig.PortBindings[docker.Port(t[2])], *portBinding)
+				break
+			}
+			re1 := regexp.MustCompile("(.+)")
+			if re1.MatchString(p.Value) {
+				t := re2.FindStringSubmatch(p.Value)
+				portBinding := &docker.PortBinding{}
+				hostConfig.PortBindings = make(map[docker.Port][]docker.PortBinding)
+				hostConfig.PortBindings[docker.Port(t[1])] = append(hostConfig.PortBindings[docker.Port(t[1])], *portBinding)
+				break
+			}
 		}
 	}
+	fmt.Println(hostConfig.PortBindings)
 	err := this.Client.StartContainer(id, hostConfig)
 	if err != nil {
 		fmt.Sprintf("StartContainer: Faile with error %s\n", err)
