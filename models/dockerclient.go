@@ -1,12 +1,7 @@
 package models
 
-import (
-	"github.com/docker/docker/api/types"
-)
+import ()
 
-type dockerclient interface {
-	Version() types.Version
-	Info() types.Info
-	CreateContainer(*Unit) (types.ContainerCreateResponse, error)
-	StartContainer(string, *Unit) error
+type DockerClient interface {
+	Run(*Unit) error
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models"
 	engine "github.com/cst05001/duang/models/dockerclienteng1"
+	scheduler1 "github.com/cst05001/duang/models/dockerdscheduler1"
 	"strconv"
 )
 
@@ -184,12 +185,18 @@ func (this *UnitController) Run() {
 
 	o.LoadRelated(unit, "Parameteres")
 
-	client := engine.NewDockerClient("tcp://192.168.119.10:2375")
+	var scheduler models.DockerdScheduler
+	scheduler = scheduler1.NewDockerdScheduler1()
+	unit.Dockerd = scheduler.GetDockerd(unit.Number)
+
+	var client models.DockerClient
+	client = engine.NewDockerClientEng1(unit)
 	/*
 		containerCreateResponse := client.CreateContainer(unit)
 		fmt.Printf("CreateContainer: %v\n", containerCreateResponse)
 		err = client.StartContainer(containerCreateResponse.ID, unit)
 	*/
+
 	err = client.Run(unit)
 	if err != nil {
 		fmt.Printf("Start Container Failed: %s\n", err)

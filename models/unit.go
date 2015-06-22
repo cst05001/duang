@@ -4,7 +4,7 @@ type Unit struct {
 	Id          int64
 	Name        string `orm:"unique"`
 	Image       string
-	Number      uint
+	Number      int64
 	Parameteres []*UnitParameter `orm:"reverse(many);on_delete(set_null)"`
 	Dockerd     []*Dockerd       `orm:"rel(m2m)"`
 }

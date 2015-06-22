@@ -6,6 +6,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models"
+	"regexp"
 	//engine "github.com/cst05001/duang/models/dockerclienteng1"
 )
 
@@ -35,6 +36,11 @@ func (this *DockerdController) Create() {
 		return
 	}
 
+	reAddr := regexp.MustCompile("(.+)://(.+):(.+)")
+	if !reAddr.MatchString(dockerd.Addr) {
+		this.Ctx.WriteString("{\"status\": \"addr format error\"}")
+		return
+	}
 	dockerd.Id, err = o.Insert(dockerd)
 	if err != nil {
 		fmt.Println(err)

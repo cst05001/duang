@@ -5,3 +5,7 @@ type Dockerd struct {
 	Addr string  `orm:"unique"`
 	Unit []*Unit `orm:"reverse(many)"`
 }
+
+type DockerdScheduler interface {
+	GetDockerd(n int64) []*Dockerd
+}
