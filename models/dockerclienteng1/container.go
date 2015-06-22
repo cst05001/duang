@@ -45,6 +45,7 @@ func (this *DockerClient) StartContainer(id string, unit *models.Unit) error {
 		case "v":
 			hostConfig.Binds = append(hostConfig.Binds, p.Value)
 		case "p":
+			rePort := regexp.MustCompile(".+/.+")
 			re3 := regexp.MustCompile("(.+):(.+):(.+)")
 			if re3.MatchString(p.Value) {
 				t := re3.FindStringSubmatch(p.Value)
@@ -52,8 +53,14 @@ func (this *DockerClient) StartContainer(id string, unit *models.Unit) error {
 					HostIP:   t[1],
 					HostPort: t[2],
 				}
+				var containerPort string
+				if rePort.MatchString(t[3]) {
+					containerPort = t[3]
+				} else {
+					containerPort = fmt.Sprintf("%s/tcp", t[3])
+				}
 				hostConfig.PortBindings = make(map[docker.Port][]docker.PortBinding)
-				hostConfig.PortBindings[docker.Port(t[3])] = append(hostConfig.PortBindings[docker.Port(t[3])], *portBinding)
+				hostConfig.PortBindings[docker.Port(containerPort)] = append(hostConfig.PortBindings[docker.Port(containerPort)], *portBinding)
 				break
 			}
 			re2 := regexp.MustCompile("(.+):(.+)")

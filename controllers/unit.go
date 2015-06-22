@@ -115,15 +115,34 @@ func (this *UnitController) Update() {
 	}
 	unit.Id = int64(unitId)
 
-	// 此处应支持事物，还没实现，是个 bug 要注意。
-	_, err = o.Update(unit)
+	// 事务开始
+	err = o.Begin()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	_, err = o.QueryTable("UnitParameter").Filter("unit_id", int64(unit.Id)).Delete()
+	_, err = o.Update(unit)
+	if err != nil {
+		fmt.Println(err)
+		err = o.Rollback()
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
 
+	// 删除全部关联参数
+	_, err = o.QueryTable("UnitParameter").Filter("unit_id", int64(unit.Id)).Delete()
+	if err != nil {
+		fmt.Println(err)
+		err = o.Rollback()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	// 插入新的参数
 	for _, v := range unit.Parameteres {
 		if len(v.Value) == 0 || len(v.Type) == 0 {
 			continue
@@ -132,10 +151,17 @@ func (this *UnitController) Update() {
 		_, err = o.Insert(v)
 		if err != nil {
 			fmt.Println(err)
+			err = o.Rollback()
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}
 
-	// bug 结束
+	err = o.Commit()
+	if err != nil {
+		fmt.Println(err)
+	}
 	fmt.Println(unit)
 	this.Ctx.WriteString("{\"status\": \"success\"}")
 }

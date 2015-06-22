@@ -11,7 +11,7 @@
 		{{range $_, $p := $.Unit.Parameteres}}
 		<div class="div_parameteres">
 		<!-- 此处有bug，等 Type 表实现了一定要改 -->
-		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" value="{{$p.Value}}" /><select class="select_parameter"><option value="v" >Volume</option><option value="p" >Expose</option></select><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" />
+		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" value="{{$p.Value}}" /><select class="select_parameter"><option value="v" {{if eq $p.Type "v"}}selected="selected"{{end}}>Volume</option><option value="p" {{if eq $p.Type "p"}}selected="selected"{{end}}>Expose</option></select><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" />
 		</div>
 		{{end}}
 		<div class="div_parameteres">
