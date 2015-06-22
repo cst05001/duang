@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
-	"github.com/cst05001/duang/models"
-	engine "github.com/cst05001/duang/models/dockerclienteng1"
-	scheduler1 "github.com/cst05001/duang/models/dockerdscheduler1"
+	"github.com/cst05001/duang/models/core"
+	engine "github.com/cst05001/duang/models/dockerdengine/engine1"
+	scheduler1 "github.com/cst05001/duang/models/dockerdscheduler/scheduler1"
 	"strconv"
 )
 
@@ -30,7 +30,7 @@ func (this *UnitController) Create() {
 	o := orm.NewOrm()
 	o.Using("default")
 
-	unit := &models.Unit{}
+	unit := &core.Unit{}
 	err := json.Unmarshal(this.Ctx.Input.RequestBody, unit)
 	if err != nil {
 		fmt.Println(err)
@@ -61,7 +61,7 @@ func (this *UnitController) Create() {
 func (this *UnitController) List() {
 	o := orm.NewOrm()
 	o.Using("default")
-	unitList := make([]models.Unit, 0)
+	unitList := make([]core.Unit, 0)
 	_, err := o.QueryTable("unit").All(&unitList)
 	if err != nil {
 		fmt.Println(err)
@@ -85,7 +85,7 @@ func (this *UnitController) UpdateHtml() {
 
 	o := orm.NewOrm()
 	o.Using("default")
-	unit := &models.Unit{Id: int64(unitId)}
+	unit := &core.Unit{Id: int64(unitId)}
 	err = o.Read(unit)
 	if err != nil {
 		fmt.Println(err)
@@ -108,7 +108,7 @@ func (this *UnitController) Update() {
 	o := orm.NewOrm()
 	o.Using("default")
 
-	unit := &models.Unit{}
+	unit := &core.Unit{}
 	err = json.Unmarshal(this.Ctx.Input.RequestBody, unit)
 	if err != nil {
 		fmt.Println(err)
@@ -176,7 +176,7 @@ func (this *UnitController) Run() {
 
 	o := orm.NewOrm()
 	o.Using("default")
-	unit := &models.Unit{Id: int64(unitId)}
+	unit := &core.Unit{Id: int64(unitId)}
 	err = o.Read(unit)
 	if err != nil {
 		fmt.Println(err)
@@ -185,11 +185,11 @@ func (this *UnitController) Run() {
 
 	o.LoadRelated(unit, "Parameteres")
 
-	var scheduler models.DockerdScheduler
+	var scheduler core.DockerdScheduler
 	scheduler = scheduler1.NewDockerdScheduler1()
 	unit.Dockerd = scheduler.GetDockerd(unit.Number)
 
-	var client models.DockerClient
+	var client core.DockerClient
 	client = engine.NewDockerClientEng1(unit)
 	/*
 		containerCreateResponse := client.CreateContainer(unit)

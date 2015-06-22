@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
-	"github.com/cst05001/duang/models"
+	"github.com/cst05001/duang/models/core"
 	"regexp"
 	//engine "github.com/cst05001/duang/models/dockerclienteng1"
 )
@@ -29,7 +29,7 @@ func (this *DockerdController) Create() {
 	o := orm.NewOrm()
 	o.Using("default")
 
-	dockerd := &models.Dockerd{}
+	dockerd := &core.Dockerd{}
 	err := json.Unmarshal(this.Ctx.Input.RequestBody, dockerd)
 	if err != nil {
 		fmt.Println(err)
@@ -54,7 +54,7 @@ func (this *DockerdController) Create() {
 func (this *DockerdController) List() {
 	o := orm.NewOrm()
 	o.Using("default")
-	dockerdList := make([]models.Dockerd, 0)
+	dockerdList := make([]core.Dockerd, 0)
 	_, err := o.QueryTable("dockerd").All(&dockerdList)
 	if err != nil {
 		fmt.Println(err)

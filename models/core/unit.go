@@ -1,4 +1,4 @@
-package models
+package core
 
 type Unit struct {
 	Id          int64

@@ -1,17 +1,17 @@
-package dockerclienteng1
+package engine1
 
 import (
 	"fmt"
-	"github.com/cst05001/duang/models"
+	"github.com/cst05001/duang/models/core"
 	docker "github.com/fsouza/go-dockerclient"
 )
 
 type DockerClientEng1 struct {
 	Client []*docker.Client
-	Unit   *models.Unit
+	Unit   *core.Unit
 }
 
-func NewDockerClientEng1(unit *models.Unit) *DockerClientEng1 {
+func NewDockerClientEng1(unit *core.Unit) *DockerClientEng1 {
 	client := &DockerClientEng1{}
 	client.Client = make([]*docker.Client, 0)
 

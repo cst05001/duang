@@ -1,4 +1,4 @@
-package models
+package core
 
 type Dockerd struct {
 	Id   int64

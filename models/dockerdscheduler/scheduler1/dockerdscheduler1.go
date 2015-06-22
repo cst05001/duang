@@ -1,9 +1,9 @@
-package dockerdscheduler1
+package scheduler1
 
 import (
 	"fmt"
 	"github.com/astaxie/beego/orm"
-	"github.com/cst05001/duang/models"
+	"github.com/cst05001/duang/models/core"
 )
 
 type DockerdScheduler1 struct {
@@ -13,7 +13,7 @@ func NewDockerdScheduler1() *DockerdScheduler1 {
 	return &DockerdScheduler1{}
 }
 
-func (this *DockerdScheduler1) GetDockerd(n int64) []*models.Dockerd {
+func (this *DockerdScheduler1) GetDockerd(n int64) []*core.Dockerd {
 	o := orm.NewOrm()
 	o.Using("default")
 
@@ -28,7 +28,7 @@ func (this *DockerdScheduler1) GetDockerd(n int64) []*models.Dockerd {
 		n = cnt
 	}
 
-	dockerdList := make([]*models.Dockerd, 0)
+	dockerdList := make([]*core.Dockerd, 0)
 	_, err = o.QueryTable("dockerd").Limit(n).All(&dockerdList)
 	if err != nil {
 		fmt.Println(err)
