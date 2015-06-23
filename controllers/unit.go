@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"github.com/cst05001/duang/models"
 	"github.com/cst05001/duang/models/core"
 	engine "github.com/cst05001/duang/models/dockerdengine/engine1"
-	scheduler1 "github.com/cst05001/duang/models/dockerdscheduler/scheduler1"
 	"strconv"
 )
 
@@ -185,9 +185,7 @@ func (this *UnitController) Run() {
 
 	o.LoadRelated(unit, "Parameteres")
 
-	var scheduler core.DockerdScheduler
-	scheduler = scheduler1.NewDockerdScheduler1()
-	unit.Dockerd = scheduler.GetDockerd(unit.Number)
+	unit.Dockerd = models.Scheduler.GetDockerd(unit.Number)
 
 	var client core.DockerClient
 	client = engine.NewDockerClientEng1(unit)

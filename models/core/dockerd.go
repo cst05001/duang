@@ -6,6 +6,6 @@ type Dockerd struct {
 	Unit []*Unit `orm:"reverse(many)"`
 }
 
-type DockerdScheduler interface {
+type DockerdSchedulerInterface interface {
 	GetDockerd(n int64) []*Dockerd
 }
