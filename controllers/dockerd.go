@@ -33,22 +33,24 @@ func (this *DockerdController) Create() {
 	err := json.Unmarshal(this.Ctx.Input.RequestBody, dockerd)
 	if err != nil {
 		fmt.Println(err)
+		WriteJson(this.Ctx, &Status{Status: "error", Msg: err.Error()})
 		return
 	}
 
 	reAddr := regexp.MustCompile("(.+)://(.+):(.+)")
 	if !reAddr.MatchString(dockerd.Addr) {
-		this.Ctx.WriteString("{\"status\": \"addr format error\"}")
+		WriteJson(this.Ctx, &Status{Status: "error", Msg: "addr format error"})
 		return
 	}
 	dockerd.Id, err = o.Insert(dockerd)
 	if err != nil {
 		fmt.Println(err)
+		WriteJson(this.Ctx, &Status{Status: "error", Msg: err.Error()})
 		return
 	}
 
 	fmt.Println(dockerd)
-	this.Ctx.WriteString("{\"status\": \"success\"}")
+	WriteJson(this.Ctx, &Status{Status: "success"})
 }
 
 func (this *DockerdController) List() {
@@ -64,12 +66,5 @@ func (this *DockerdController) List() {
 		o.LoadRelated(&dockerdList[k], "Unit")
 	}
 
-	/*** 测试代码开始
-	client := engine.NewDockerClient("tcp://192.168.119.10:2375")
-	client.Info()
-	测试代码结束 */
-
-	this.Data["DockerdList"] = dockerdList
-	this.TplNames = "dockerd/list.tpl"
-	this.Render()
+	WriteJson(this.Ctx, dockerdList)
 }
