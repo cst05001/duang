@@ -35,6 +35,15 @@ func (this *DockerdScheduler1) GetDockerd(n int64) []*core.Dockerd {
 		fmt.Println(err)
 		return nil
 	}
+	if this.Count + n > cnt {
+		dockerdList2 := make([]*core.Dockerd, 0)
+		_, err = o.QueryTable("dockerd").Limit(this.Count + n - cnt, 0).All(&dockerdList)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		dockerdList = append(dockerdList, dockerdList2...)
+	}
 	this.Count = (this.Count + n) % cnt
 	return dockerdList
 }
