@@ -7,10 +7,11 @@ import (
 )
 
 type DockerdScheduler1 struct {
+	Count int64
 }
 
 func NewDockerdScheduler1() *DockerdScheduler1 {
-	return &DockerdScheduler1{}
+	return &DockerdScheduler1{Count: 0}
 }
 
 func (this *DockerdScheduler1) GetDockerd(n int64) []*core.Dockerd {
@@ -29,10 +30,11 @@ func (this *DockerdScheduler1) GetDockerd(n int64) []*core.Dockerd {
 	}
 
 	dockerdList := make([]*core.Dockerd, 0)
-	_, err = o.QueryTable("dockerd").Limit(n).All(&dockerdList)
+	_, err = o.QueryTable("dockerd").Limit(n, this.Count).All(&dockerdList)
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
+	this.Count = (this.Count + n) % cnt
 	return dockerdList
 }
