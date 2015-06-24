@@ -56,7 +56,7 @@ func (this *UnitController) Create() {
 	}
 
 	fmt.Println(unit)
-	this.Ctx.WriteString("{\"status\": \"success\"}")
+	WriteJson(this.Ctx, unit)
 }
 
 func (this *UnitController) List() {
@@ -171,7 +171,7 @@ func (this *UnitController) Update() {
 		return
 	}
 	fmt.Println(unit)
-	this.Ctx.WriteString("{\"status\": \"success\"}")
+	WriteJson(this.Ctx, unit)
 }
 
 func (this *UnitController) Run() {
