@@ -8,7 +8,9 @@ import (
 	"github.com/cst05001/duang/models"
 	"github.com/cst05001/duang/models/core"
 	"github.com/cst05001/duang/models/dockerdengine"
-	engine "github.com/cst05001/duang/models/dockerdengine/engine1"
+	dockerd_engine1 "github.com/cst05001/duang/models/dockerdengine/engine1"
+	"github.com/cst05001/duang/models/deliverengine"
+	deliver_engine1 "github.com/cst05001/duang/models/deliverengine/engine1"
 	"strconv"
 )
 
@@ -196,17 +198,17 @@ func (this *UnitController) Run() {
 	unit.Dockerd = models.Scheduler.GetDockerd(unit.Number)
 
 	var client dockerdengine.DockerClient
-	client = engine.NewDockerClientEng1(unit)
-	/*
-		containerCreateResponse := client.CreateContainer(unit)
-		fmt.Printf("CreateContainer: %v\n", containerCreateResponse)
-		err = client.StartContainer(containerCreateResponse.ID, unit)
-	*/
-
+	client = dockerd_engine1.NewDockerClientEng1(unit)
 	err = client.Run(unit)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
+	
+	//测试代码开始
+	var deliver deliverengine.DeliverInterface
+	deliver = deliver_engine1.NewDeliver()
+	deliver.AddBackend("a", nil)
+	//测试代码结束
 	fmt.Println(unit)
 }
