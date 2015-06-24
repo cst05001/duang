@@ -7,6 +7,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models"
 	"github.com/cst05001/duang/models/core"
+	"github.com/cst05001/duang/models/dockerdengine"
 	engine "github.com/cst05001/duang/models/dockerdengine/engine1"
 	"strconv"
 )
@@ -194,7 +195,7 @@ func (this *UnitController) Run() {
 
 	unit.Dockerd = models.Scheduler.GetDockerd(unit.Number)
 
-	var client core.DockerClient
+	var client dockerdengine.DockerClient
 	client = engine.NewDockerClientEng1(unit)
 	/*
 		containerCreateResponse := client.CreateContainer(unit)

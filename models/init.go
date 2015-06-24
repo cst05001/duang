@@ -1,11 +1,11 @@
 package models
 
 import (
-	"github.com/cst05001/duang/models/core"
+	"github.com/cst05001/duang/models/dockerdscheduler"
 	scheduler1 "github.com/cst05001/duang/models/dockerdscheduler/scheduler1"
 )
 
-var Scheduler core.DockerdSchedulerInterface
+var Scheduler dockerdscheduler.DockerdSchedulerInterface
 
 func init() {
 
