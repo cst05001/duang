@@ -33,24 +33,24 @@ func (this *DockerdController) Create() {
 	err := json.Unmarshal(this.Ctx.Input.RequestBody, dockerd)
 	if err != nil {
 		fmt.Println(err)
-		WriteJson(this.Ctx, &Status{Status: "error", Msg: err.Error()})
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 
 	reAddr := regexp.MustCompile("(.+)://(.+):(.+)")
 	if !reAddr.MatchString(dockerd.Addr) {
-		WriteJson(this.Ctx, &Status{Status: "error", Msg: "addr format error"})
+		WriteJson(this.Ctx, &StatusError{Error: "bad format"})
 		return
 	}
 	dockerd.Id, err = o.Insert(dockerd)
 	if err != nil {
 		fmt.Println(err)
-		WriteJson(this.Ctx, &Status{Status: "error", Msg: err.Error()})
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 
 	fmt.Println(dockerd)
-	WriteJson(this.Ctx, &Status{Status: "success"})
+	WriteJson(this.Ctx, dockerd)
 }
 
 func (this *DockerdController) List() {
@@ -60,6 +60,7 @@ func (this *DockerdController) List() {
 	_, err := o.QueryTable("dockerd").All(&dockerdList)
 	if err != nil {
 		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 	for k, _ := range dockerdList {

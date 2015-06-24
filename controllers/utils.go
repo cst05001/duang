@@ -6,9 +6,8 @@ import (
 	"github.com/astaxie/beego/context"
 )
 
-type Status struct {
-	Status string
-	Msg    string
+type StatusError struct {
+	Error string
 }
 
 func WriteJson(ctx *context.Context, i interface{}) error {

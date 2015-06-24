@@ -34,6 +34,7 @@ func (this *UnitController) Create() {
 	err := json.Unmarshal(this.Ctx.Input.RequestBody, unit)
 	if err != nil {
 		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 
@@ -71,15 +72,13 @@ func (this *UnitController) List() {
 		o.LoadRelated(&unitList[k], "Parameteres")
 	}
 
-	this.Data["UnitList"] = unitList
-	this.TplNames = "unit/list.tpl"
-	this.Render()
+	WriteJson(this.Ctx, unitList)
 }
 
 func (this *UnitController) UpdateHtml() {
 	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":unitid"))
 	if err != nil {
-		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 
@@ -88,7 +87,7 @@ func (this *UnitController) UpdateHtml() {
 	unit := &core.Unit{Id: int64(unitId)}
 	err = o.Read(unit)
 	if err != nil {
-		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 
@@ -101,7 +100,7 @@ func (this *UnitController) UpdateHtml() {
 func (this *UnitController) Update() {
 	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":unitid"))
 	if err != nil {
-		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 
@@ -111,7 +110,7 @@ func (this *UnitController) Update() {
 	unit := &core.Unit{}
 	err = json.Unmarshal(this.Ctx.Input.RequestBody, unit)
 	if err != nil {
-		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 	unit.Id = int64(unitId)
@@ -119,16 +118,18 @@ func (this *UnitController) Update() {
 	// 事务开始
 	err = o.Begin()
 	if err != nil {
-		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 
 	_, err = o.Update(unit)
 	if err != nil {
-		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
 		err = o.Rollback()
 		if err != nil {
-			fmt.Println(err)
+			WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+			return
 		}
 		return
 	}
@@ -136,10 +137,12 @@ func (this *UnitController) Update() {
 	// 删除全部关联参数
 	_, err = o.QueryTable("UnitParameter").Filter("unit_id", int64(unit.Id)).Delete()
 	if err != nil {
-		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
 		err = o.Rollback()
 		if err != nil {
-			fmt.Println(err)
+			WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+			return
 		}
 	}
 
@@ -151,17 +154,21 @@ func (this *UnitController) Update() {
 		v.Unit = unit
 		_, err = o.Insert(v)
 		if err != nil {
-			fmt.Println(err)
+			WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+			return
 			err = o.Rollback()
 			if err != nil {
-				fmt.Println(err)
+				WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+				return
 			}
 		}
 	}
 
 	err = o.Commit()
 	if err != nil {
-		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		o.Rollback()
+		return
 	}
 	fmt.Println(unit)
 	this.Ctx.WriteString("{\"status\": \"success\"}")
@@ -170,7 +177,7 @@ func (this *UnitController) Update() {
 func (this *UnitController) Run() {
 	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":unitid"))
 	if err != nil {
-		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 
@@ -179,7 +186,7 @@ func (this *UnitController) Run() {
 	unit := &core.Unit{Id: int64(unitId)}
 	err = o.Read(unit)
 	if err != nil {
-		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 
@@ -197,7 +204,7 @@ func (this *UnitController) Run() {
 
 	err = client.Run(unit)
 	if err != nil {
-		fmt.Printf("Start Container Failed: %s\n", err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 	fmt.Println(unit)
