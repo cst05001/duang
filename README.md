@@ -88,3 +88,7 @@ json格式
 #####方法 GET
 
 启动 Unit
+
+##和confd配合的etcd目录结构
+
+![etcd目录结构](etcd_directory_arch.png "etcd目录结构")

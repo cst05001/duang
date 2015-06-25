@@ -1,16 +1,16 @@
 package engine1
 
 import (
-	"strings"
 	"fmt"
 	"github.com/astaxie/beego/config"
 	"github.com/coreos/go-etcd/etcd"
+	"strings"
 )
-type Engine1 struct {
-	Addr	[]string
-	Root 	string
-}
 
+type Engine1 struct {
+	Addr []string
+	Root string
+}
 
 func NewDeliver() *Engine1 {
 	e := &Engine1{}
@@ -24,30 +24,26 @@ func (this *Engine1) Init() error {
 		fmt.Println(err)
 		return err
 	}
-	etcd_addr := duangcfg.String("etcd_addr") 
+	etcd_addr := duangcfg.String("etcd_addr")
 	this.Root = duangcfg.String("etcd_root")
 
 	this.Addr = strings.Split(etcd_addr, ",")
 
 	//如果 root 不存在，则创建。
 	etcdClient := etcd.NewClient(this.Addr)
-    response , err := etcdClient.Get(this.Root, true, false)
-    if err != nil {
-    	errorCode, _, _ := ParseError(err)
-    	if errorCode == "100" {
-    		_, err = etcdClient.SetDir(this.Root, 0)
-    		if err != nil {
-    			fmt.Println(err)
-    			return nil
-    		}
-    	}
-    } else {
-    	fmt.Println(response.Node)
-    }
-    //测试代码
+	_, err = EtcdLs(etcdClient, this.Root)
+	if err != nil {
+		errorCode, _, _ := ParseError(err)
+		if errorCode == "100" {
+			err = EtcdMkDir(etcdClient, this.Root, 0)
+			if err != nil {
+				fmt.Println(err)
+				return nil
+			}
+		}
+	}
 	return nil
 }
-
 
 func (this *Engine1) SetBackend(frontend string, backends []string) error {
 	return nil
