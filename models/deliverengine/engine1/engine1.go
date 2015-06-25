@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/astaxie/beego/config"
 	"github.com/coreos/go-etcd/etcd"
+	"path"
 	"strings"
 )
 
@@ -36,6 +37,28 @@ func (this *Engine1) Init() error {
 		errorCode, _, _ := ParseError(err)
 		if errorCode == "100" {
 			err = EtcdMkDir(etcdClient, this.Root, 0)
+			if err != nil {
+				fmt.Println(err)
+				return nil
+			}
+		}
+	}
+	_, err = EtcdLs(etcdClient, path.Join(this.Root, "backend"))
+	if err != nil {
+		errorCode, _, _ := ParseError(err)
+		if errorCode == "100" {
+			err = EtcdMkDir(etcdClient, path.Join(this.Root, "backend"), 0)
+			if err != nil {
+				fmt.Println(err)
+				return nil
+			}
+		}
+	}
+	_, err = EtcdLs(etcdClient, path.Join(this.Root, "frontend"))
+	if err != nil {
+		errorCode, _, _ := ParseError(err)
+		if errorCode == "100" {
+			err = EtcdMkDir(etcdClient, path.Join(this.Root, "frontend"), 0)
 			if err != nil {
 				fmt.Println(err)
 				return nil

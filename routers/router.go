@@ -21,4 +21,7 @@ func init() {
 	beego.Router("/dockerd/create", &controllers.DockerdController{}, "get:CreateHtml")
 	beego.Router("/dockerd/create", &controllers.DockerdController{}, "post:Create")
 	beego.Router("/dockerd/list", &controllers.DockerdController{}, "get:List")
+
+	beego.Router("/ippool/create", &controllers.IPPoolController{}, "get:CreateHtml")
+	beego.Router("/ippool/create", &controllers.IPPoolController{}, "post:Create")
 }
