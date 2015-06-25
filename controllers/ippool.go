@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models/core"
 	"regexp"
 )
@@ -25,30 +24,35 @@ func (this *IPPoolController) CreateHtml() {
 }
 
 func (this *IPPoolController) Create() {
-	o := orm.NewOrm()
-	o.Using("default")
-
-	ipPool := &core.IpPool{}
-	err := json.Unmarshal(this.Ctx.Input.RequestBody, ipPool)
+	ip := &core.Ip{}
+	err := json.Unmarshal(this.Ctx.Input.RequestBody, ip)
 	if err != nil {
 		fmt.Println(err)
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
-	fmt.Println(ipPool)
 
-	reAddr := regexp.MustCompile("^\\d+\\.\\d+\\.\\d+\\.\\d+$")
-	if !reAddr.MatchString(ipPool.IP) {
+	re := regexp.MustCompile("^\\d+\\.\\d+\\.\\d+\\.\\d+$")
+	if !re.MatchString(ip.Ip) {
 		WriteJson(this.Ctx, &StatusError{Error: "bad format"})
 		return
 	}
-	ipPool.Id, err = o.Insert(ipPool)
+
+	ipPool := core.NewIpPool()
+	ip, err = ipPool.AddIP(ip)
 	if err != nil {
-		fmt.Println(err)
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
+	WriteJson(this.Ctx, ip)
+}
 
-	fmt.Println(ipPool)
-	WriteJson(this.Ctx, ipPool)
+func (this *IPPoolController) List() {
+	ipPool := core.NewIpPool()
+	ips, err := ipPool.GetAllIP()
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+	WriteJson(this.Ctx, ips)
 }

@@ -24,4 +24,5 @@ func init() {
 
 	beego.Router("/ippool/create", &controllers.IPPoolController{}, "get:CreateHtml")
 	beego.Router("/ippool/create", &controllers.IPPoolController{}, "post:Create")
+	beego.Router("/ippool/list", &controllers.IPPoolController{}, "get:List")
 }

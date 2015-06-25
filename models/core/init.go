@@ -16,7 +16,7 @@ func init() {
 	orm.RegisterDriver("mysql", orm.DR_MySQL)
 	orm.RegisterDataBase("default", "mysql", fmt.Sprintf("%s:%s@%s/%s?charset=utf8", duangcfg.String("db_user"), duangcfg.String("db_pass"), duangcfg.String("db_addr"), duangcfg.String("db_name")))
 
-	orm.RegisterModel(new(Unit), new(UnitParameter), new(Dockerd), new(IpPool))
+	orm.RegisterModel(new(Unit), new(UnitParameter), new(Dockerd), new(Ip))
 
 	force, err := duangcfg.Bool("db_dropifexist")
 	if err != nil {
