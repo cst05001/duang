@@ -13,6 +13,9 @@ duang是一个以业务为单位的，分发器+docker集群的方案。前端�
 
 	db_dropifexist = false #这个仅供测试用。默认不写或者false，如果设置成true，每次启动都会清空数据库。
 
+	etcd_addr = <http|https>://etcd服务器IP:端口
+	etcd_root = /根目录
+
 ##架构图
 
 ![框架图](duang.png "框架图")
