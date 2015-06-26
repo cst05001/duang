@@ -48,6 +48,7 @@ func (this *IPPoolController) Create() {
 }
 
 func (this *IPPoolController) ListAll() {
+
 	ipPool := core.NewIpPool()
 	ips, err := ipPool.ListAllIP()
 	if err != nil {
