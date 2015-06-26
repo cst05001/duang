@@ -47,9 +47,29 @@ func (this *IPPoolController) Create() {
 	WriteJson(this.Ctx, ip)
 }
 
-func (this *IPPoolController) List() {
+func (this *IPPoolController) ListAll() {
 	ipPool := core.NewIpPool()
-	ips, err := ipPool.GetAllIP()
+	ips, err := ipPool.ListAllIP()
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+	WriteJson(this.Ctx, ips)
+}
+
+func (this *IPPoolController) ListUsed() {
+	ipPool := core.NewIpPool()
+	ips, err := ipPool.ListUsedIP(-1)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+	WriteJson(this.Ctx, ips)
+}
+
+func (this *IPPoolController) ListFree() {
+	ipPool := core.NewIpPool()
+	ips, err := ipPool.ListFreeIP(-1)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
