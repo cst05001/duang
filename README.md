@@ -16,6 +16,13 @@ duang是一个以业务为单位的，分发器+docker集群的方案。前端�
 	etcd_addr = <http|https>://etcd服务器IP:端口
 	etcd_root = /根目录
 
+	network_mode = <pipework|nat>
+
+	pipework_path = pipework路径
+
+	ssh_user = root
+	ssh_keypath = ssh私钥
+
 ##架构图
 
 ![框架图](duang.png "框架图")
