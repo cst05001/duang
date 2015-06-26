@@ -7,13 +7,13 @@ import (
 )
 
 type DockerClientEng1 struct {
-	Client []*docker.Client
-	Unit   *core.Unit
+	ClientMap map[*core.Dockerd]*docker.Client
+	Unit      *core.Unit
 }
 
 func NewDockerClientEng1(unit *core.Unit) *DockerClientEng1 {
 	client := &DockerClientEng1{}
-	client.Client = make([]*docker.Client, 0)
+	client.ClientMap = make(map[*core.Dockerd]*docker.Client)
 
 	for _, dockerd := range unit.Dockerd {
 		var err error
@@ -22,7 +22,7 @@ func NewDockerClientEng1(unit *core.Unit) *DockerClientEng1 {
 			fmt.Printf("NewDockerClientEng1: %s\n", err)
 			return nil
 		}
-		client.Client = append(client.Client, c)
+		client.ClientMap[dockerd] = c
 	}
 	return client
 }

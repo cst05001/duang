@@ -8,16 +8,8 @@ import (
 	"regexp"
 )
 
-func (this *DockerClientEng1) Run(unit *core.Unit) error {
-	/*
-		containerCreateResponse, err := this.CreateContainer(unit)
-		if err != nil {
-			return err
-		}
-		err = this.StartContainer(containerCreateResponse.ID, unit)
-		return err
-	*/
-	// create container
+func (this *DockerClientEng1) Run(unit *core.Unit, onCreateSuccess interface{}) error {
+
 	hostConfig := &docker.HostConfig{}
 	config := &docker.Config{
 		Image: unit.Image,
@@ -28,7 +20,7 @@ func (this *DockerClientEng1) Run(unit *core.Unit) error {
 		HostConfig: hostConfig,
 	}
 	containerCreateResponse := &types.ContainerCreateResponse{}
-	for _, client := range this.Client {
+	for _, client := range this.ClientMap {
 		container, err := client.CreateContainer(*createContainerOptions)
 		if err != nil {
 			fmt.Println(err)

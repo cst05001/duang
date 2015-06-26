@@ -9,8 +9,6 @@ import (
 	"github.com/cst05001/duang/models/core"
 	"github.com/cst05001/duang/models/dockerdengine"
 	dockerd_engine1 "github.com/cst05001/duang/models/dockerdengine/engine1"
-	"github.com/cst05001/duang/models/deliverengine"
-	deliver_engine1 "github.com/cst05001/duang/models/deliverengine/engine1"
 	"strconv"
 )
 
@@ -41,9 +39,20 @@ func (this *UnitController) Create() {
 		return
 	}
 
+	// 事务开始
+	err = o.Begin()
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+
 	unit.Id, err = o.Insert(unit)
 	if err != nil {
 		fmt.Println(err)
+		err = o.Rollback()
+		if err != nil {
+			fmt.Println(err)
+		}
 		return
 	}
 
@@ -51,13 +60,28 @@ func (this *UnitController) Create() {
 		if len(v.Value) == 0 || len(v.Type) == 0 {
 			continue
 		}
+
 		v.Unit = unit
 		_, err = o.Insert(v)
 		if err != nil {
 			fmt.Println(err)
+			err = o.Rollback()
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
 		}
+
+	}
+	o.Commit()
+
+	err = o.Read(unit)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
 	}
 
+	o.LoadRelated(unit, "Parameteres")
 	fmt.Println(unit)
 	WriteJson(this.Ctx, unit)
 }
@@ -173,6 +197,7 @@ func (this *UnitController) Update() {
 		o.Rollback()
 		return
 	}
+
 	fmt.Println(unit)
 	WriteJson(this.Ctx, unit)
 }
@@ -199,16 +224,11 @@ func (this *UnitController) Run() {
 
 	var client dockerdengine.DockerClient
 	client = dockerd_engine1.NewDockerClientEng1(unit)
-	err = client.Run(unit)
+	err = client.Run(unit, nil)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
-	
-	//测试代码开始
-	var deliver deliverengine.DeliverInterface
-	deliver = deliver_engine1.NewDeliver()
-	deliver.AddBackend("a", nil)
-	//测试代码结束
+
 	fmt.Println(unit)
 }

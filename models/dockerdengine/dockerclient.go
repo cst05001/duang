@@ -5,5 +5,6 @@ import (
 )
 
 type DockerClient interface {
-	Run(*core.Unit) error
+	//interface1 传入回调函数
+	Run(*core.Unit, interface{}) error
 }
