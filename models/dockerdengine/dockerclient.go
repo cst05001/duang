@@ -6,5 +6,5 @@ import (
 
 type DockerClient interface {
 	//interface1 传入回调函数
-	Run(*core.Unit, interface{}) error
+	Run(*core.Unit, func(*core.Dockerd)) error
 }

@@ -8,7 +8,7 @@ import (
 	"regexp"
 )
 
-func (this *DockerClientEng1) Run(unit *core.Unit, onCreateSuccess interface{}) error {
+func (this *DockerClientEng1) Run(unit *core.Unit, onCreateSuccess func(*core.Dockerd)) error {
 
 	hostConfig := &docker.HostConfig{}
 	config := &docker.Config{
@@ -20,7 +20,7 @@ func (this *DockerClientEng1) Run(unit *core.Unit, onCreateSuccess interface{}) 
 		HostConfig: hostConfig,
 	}
 	containerCreateResponse := &types.ContainerCreateResponse{}
-	for _, client := range this.ClientMap {
+	for dockerd, client := range this.ClientMap {
 		container, err := client.CreateContainer(*createContainerOptions)
 		if err != nil {
 			fmt.Println(err)
@@ -29,6 +29,7 @@ func (this *DockerClientEng1) Run(unit *core.Unit, onCreateSuccess interface{}) 
 		}
 		fmt.Println(container)
 		containerCreateResponse.ID = container.ID
+		onCreateSuccess(dockerd)
 
 		// start container
 		for _, p := range unit.Parameteres {

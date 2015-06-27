@@ -224,7 +224,10 @@ func (this *UnitController) Run() {
 
 	var client dockerdengine.DockerClient
 	client = dockerd_engine1.NewDockerClientEng1(unit)
-	err = client.Run(unit, nil)
+	err = client.Run(unit, func(dockerd *core.Dockerd) {
+		fmt.Printf("Success: %s\n", dockerd.Addr)
+		fmt.Println(dockerd.GetIP())
+	})
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
