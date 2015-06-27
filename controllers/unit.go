@@ -224,14 +224,24 @@ func (this *UnitController) Run() {
 
 	var client dockerdengine.DockerClient
 	client = dockerd_engine1.NewDockerClientEng1(unit)
-	err = client.Run(unit, func(dockerd *core.Dockerd) {
-		fmt.Printf("Success: %s\n", dockerd.Addr)
-		fmt.Println(dockerd.GetIP())
-	})
+	err = client.Run(unit, dockerdCallbackFunc)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 
 	fmt.Println(unit)
+}
+
+func dockerdCallbackFunc(dockerd *core.Dockerd, status int) {
+	switch status {
+	case dockerdengine.STATUS_ON_CREATE_SUCCESSED:
+		fmt.Printf("CreateSuccessed: %s\n", dockerd.GetIP())
+	case dockerdengine.STATUS_ON_CREATE_FAILED:
+		fmt.Printf("CreateFailed: %s\n", dockerd.GetIP())
+	case dockerdengine.STATUS_ON_RUN_SUCCESSED:
+		fmt.Printf("RunSuccessed: %s\n", dockerd.GetIP())
+	case dockerdengine.STATUS_ON_RUN_FAILED:
+		fmt.Printf("RunFailed: %s\n", dockerd.GetIP())
+	}
 }

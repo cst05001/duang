@@ -3,12 +3,13 @@ package engine1
 import (
 	"fmt"
 	"github.com/cst05001/duang/models/core"
+	"github.com/cst05001/duang/models/dockerdengine"
 	"github.com/docker/docker/api/types"
 	docker "github.com/fsouza/go-dockerclient"
 	"regexp"
 )
 
-func (this *DockerClientEng1) Run(unit *core.Unit, onCreateSuccess func(*core.Dockerd)) error {
+func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Dockerd, int)) error {
 
 	hostConfig := &docker.HostConfig{}
 	config := &docker.Config{
@@ -25,11 +26,12 @@ func (this *DockerClientEng1) Run(unit *core.Unit, onCreateSuccess func(*core.Do
 		if err != nil {
 			fmt.Println(err)
 			containerCreateResponse.Warnings = append(containerCreateResponse.Warnings, err.Error())
-			return err
+			callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_FAILED)
+			continue
 		}
 		fmt.Println(container)
 		containerCreateResponse.ID = container.ID
-		onCreateSuccess(dockerd)
+		callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_SUCCESSED)
 
 		// start container
 		for _, p := range unit.Parameteres {
@@ -79,7 +81,7 @@ func (this *DockerClientEng1) Run(unit *core.Unit, onCreateSuccess func(*core.Do
 		err = client.StartContainer(containerCreateResponse.ID, hostConfig)
 		if err != nil {
 			fmt.Sprintf("StartContainer: Faile with error %s\n", err)
-			return err
+			continue
 		}
 	}
 	return nil
