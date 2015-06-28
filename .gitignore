@@ -47,4 +47,5 @@ conf/duang.conf
 *.exe
 *.exe~
 *.pem
+*.key
 duang

@@ -12,6 +12,6 @@ const (
 )
 
 type DockerClient interface {
-	//Unit, calllbackFunc(*core.Dockerd, int type status)
-	Run(*core.Unit, func(*core.Dockerd, int)) error
+	//Unit, calllbackFunc(*core.Dockerd, int type status, ...args)
+	Run(*core.Unit, func(*core.Dockerd, int, ...interface{})) error
 }

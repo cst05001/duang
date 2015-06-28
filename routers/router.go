@@ -27,4 +27,5 @@ func init() {
 	beego.Router("/ippool/list", &controllers.IPPoolController{}, "get:ListAll")
 	beego.Router("/ippool/list/used", &controllers.IPPoolController{}, "get:ListUsed")
 	beego.Router("/ippool/list/free", &controllers.IPPoolController{}, "get:ListFree")
+	beego.Router("/ippool/release/:id:int", &controllers.IPPoolController{}, "get:Release")
 }

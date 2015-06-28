@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models"
 	"github.com/cst05001/duang/models/core"
 	"github.com/cst05001/duang/models/dockerdengine"
 	dockerd_engine1 "github.com/cst05001/duang/models/dockerdengine/engine1"
+	"github.com/cst05001/duang/models/sshclientengine"
+	sshclientengine1 "github.com/cst05001/duang/models/sshclientengine/engine1"
 	"strconv"
 )
 
@@ -233,14 +236,47 @@ func (this *UnitController) Run() {
 	fmt.Println(unit)
 }
 
-func dockerdCallbackFunc(dockerd *core.Dockerd, status int) {
+func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{}) {
+	ippool := core.NewIpPool()
+	var ip *core.Ip
+	var err error
 	switch status {
 	case dockerdengine.STATUS_ON_CREATE_SUCCESSED:
-		fmt.Printf("CreateSuccessed: %s\n", dockerd.GetIP())
+		fmt.Printf("在宿主机 %s 创建容器成功\n", dockerd.GetIP())
+
 	case dockerdengine.STATUS_ON_CREATE_FAILED:
 		fmt.Printf("CreateFailed: %s\n", dockerd.GetIP())
 	case dockerdengine.STATUS_ON_RUN_SUCCESSED:
 		fmt.Printf("RunSuccessed: %s\n", dockerd.GetIP())
+
+		ip, err = ippool.GetFreeIP()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Printf("分配容器IP: %s\n", ip.Ip)
+
+		duangcfg, err := config.NewConfig("ini", "conf/duang.conf")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		var sshclient sshclientengine.SshClientInterface
+		sshclient, err = sshclientengine1.NewSSLClient(fmt.Sprintf("%s:%s", dockerd.GetIP(), duangcfg.String("ssh_port")), duangcfg.String("ssh_user"), duangcfg.String("ssh_keypath"))
+		if err != nil {
+			fmt.Println(err)
+			ippool.ReleaseIP(ip.Id)
+			return
+		}
+		//pipework br0 containerName 192.168.0.0/24@192.168.0.1
+		cmd := fmt.Sprintf("%s %s %s %s/24", duangcfg.String("pipework_path"), duangcfg.String("pipework_bridge"), args[0].(string), ip.Ip)
+		fmt.Printf("CMD: %s\n", cmd)
+		err = sshclient.Run(cmd)
+		if err != nil {
+			fmt.Println(err)
+			ippool.ReleaseIP(ip.Id)
+		}
 	case dockerdengine.STATUS_ON_RUN_FAILED:
 		fmt.Printf("RunFailed: %s\n", dockerd.GetIP())
 	}

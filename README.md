@@ -19,8 +19,10 @@ duang是一个以业务为单位的，分发器+docker集群的方案。前端�
 	network_mode = <pipework|nat>
 
 	pipework_path = pipework路径
+	pipework_bridge = 网桥
 
 	ssh_user = root
+	ssh_prot = 22
 	ssh_keypath = ssh私钥
 
 ##架构图

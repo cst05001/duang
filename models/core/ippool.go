@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"github.com/astaxie/beego/orm"
 )
@@ -22,19 +23,64 @@ func NewIpPool() *IpPool {
 	return ipPool
 }
 
+func (this *IpPool) ReleaseIP(id int64) error {
+	o := orm.NewOrm()
+	o.Using("default")
+	var err error
+
+	ip := &Ip{Id: id}
+	err = o.Read(ip)
+	if err != nil {
+		return err
+	}
+
+	if ip.Status != 0 {
+		return errors.New("not used IP")
+	}
+
+	ip.Status = 1
+	_, err = o.Update(ip)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 //获取可用IP
-func (this *IpPool) GetFreeIP(n int64) ([]*Ip, error) {
-	ips, err := this.ListIPByStatus(1, n)
+func (this *IpPool) GetFreeIP() (*Ip, error) {
+	o := orm.NewOrm()
+	o.Using("default")
+	var err error
+
+	ip := &Ip{}
+	err = o.QueryTable("Ip").Filter("status", 1).Limit(1).One(ip)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
-	err = this.ChangeState(ips, 0)
+	err = o.Begin()
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
-	return ips, nil
+	ip.Status = 0
+	_, err = o.Update(ip)
+	if err != nil {
+		fmt.Println(err)
+		err2 := o.Rollback()
+		if err2 != nil {
+			fmt.Println(err2)
+			return nil, err2
+		}
+		return nil, err
+	}
+	err = o.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return ip, err
 }
 
 func (this *IpPool) ListUsedIP(n int64) ([]*Ip, error) {

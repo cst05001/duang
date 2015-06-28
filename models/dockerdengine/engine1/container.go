@@ -9,7 +9,7 @@ import (
 	"regexp"
 )
 
-func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Dockerd, int)) error {
+func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Dockerd, int, ...interface{})) error {
 
 	hostConfig := &docker.HostConfig{}
 	config := &docker.Config{
@@ -26,12 +26,12 @@ func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Docke
 		if err != nil {
 			fmt.Println(err)
 			containerCreateResponse.Warnings = append(containerCreateResponse.Warnings, err.Error())
-			callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_FAILED)
+			callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_FAILED, unit.Name)
 			continue
 		}
 		fmt.Println(container)
 		containerCreateResponse.ID = container.ID
-		callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_SUCCESSED)
+		callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_SUCCESSED, unit.Name)
 
 		// start container
 		for _, p := range unit.Parameteres {
@@ -81,8 +81,10 @@ func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Docke
 		err = client.StartContainer(containerCreateResponse.ID, hostConfig)
 		if err != nil {
 			fmt.Sprintf("StartContainer: Faile with error %s\n", err)
+			callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_FAILED, unit.Name)
 			continue
 		}
+		callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_SUCCESSED, unit.Name)
 	}
 	return nil
 }

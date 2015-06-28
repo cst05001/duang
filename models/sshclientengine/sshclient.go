@@ -1,6 +1,6 @@
 package sshclientengine
 
-type SshClient interface {
+type SshClientInterface interface {
 	Start(cmd string) error
 	Run(cmd string) error
 	Output(cmd string) ([]byte, error)

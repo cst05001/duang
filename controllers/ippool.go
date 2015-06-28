@@ -6,6 +6,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/cst05001/duang/models/core"
 	"regexp"
+	"strconv"
 )
 
 type IPPoolController struct {
@@ -56,6 +57,21 @@ func (this *IPPoolController) ListAll() {
 		return
 	}
 	WriteJson(this.Ctx, ips)
+}
+
+func (this *IPPoolController) Release() {
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+
+	ipPool := core.NewIpPool()
+	err = ipPool.ReleaseIP(int64(id))
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
 }
 
 func (this *IPPoolController) ListUsed() {
