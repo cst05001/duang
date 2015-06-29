@@ -33,7 +33,8 @@ func (this *IPPoolController) Create() {
 		return
 	}
 
-	re := regexp.MustCompile("^\\d+\\.\\d+\\.\\d+\\.\\d+$")
+	//re := regexp.MustCompile("^\\d+\\.\\d+\\.\\d+\\.\\d+$")
+	re := regexp.MustCompile("^\\d+\\.\\d+\\.\\d+\\.\\d+/\\d+@\\d+\\.\\d+\\.\\d+\\.\\d+$")
 	if !re.MatchString(ip.Ip) {
 		WriteJson(this.Ctx, &StatusError{Error: "bad format"})
 		return

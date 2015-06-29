@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/astaxie/beego/orm"
+	"regexp"
 )
 
 /*
@@ -16,6 +17,24 @@ type Ip struct {
 	Id     int64
 	Ip     string `orm:"unique"`
 	Status uint8  `orm:"default(1)"`
+}
+
+func (this *Ip) GetIP() string {
+	re := regexp.MustCompile("^(\\d+\\.\\d+\\.\\d+\\.\\d+)/(\\d+)@(\\d+\\.\\d+\\.\\d+\\.\\d+)$")
+	result := re.FindStringSubmatch(this.Ip)
+	return result[1]
+}
+
+func (this *Ip) GetPrefix() string {
+	re := regexp.MustCompile("^(\\d+\\.\\d+\\.\\d+\\.\\d+)/(\\d+)@(\\d+\\.\\d+\\.\\d+\\.\\d+)$")
+	result := re.FindStringSubmatch(this.Ip)
+	return result[2]
+}
+
+func (this *Ip) GetGateway() string {
+	re := regexp.MustCompile("^(\\d+\\.\\d+\\.\\d+\\.\\d+)/(\\d+)@(\\d+\\.\\d+\\.\\d+\\.\\d+)$")
+	result := re.FindStringSubmatch(this.Ip)
+	return result[3]
 }
 
 func NewIpPool() *IpPool {

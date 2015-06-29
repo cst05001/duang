@@ -258,7 +258,7 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 			fmt.Println(err)
 			return
 		}
-		fmt.Printf("分配容器IP: %s\n", ip.Ip)
+		fmt.Printf("分配容器IP: %s\n", ip.GetIP())
 		//分配容器IP结束
 
 		//调用pipework开始
@@ -276,7 +276,7 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 			return
 		}
 		//pipework br0 containerName 192.168.0.0/24@192.168.0.1
-		cmd := fmt.Sprintf("%s %s %s %s/24", duangcfg.String("pipework_path"), duangcfg.String("pipework_bridge"), args[0].(string), ip.Ip)
+		cmd := fmt.Sprintf("%s %s %s %s", duangcfg.String("pipework_path"), duangcfg.String("pipework_bridge"), args[0].(string), ip.Ip)
 		fmt.Printf("CMD: %s\n", cmd)
 		err = sshclient.Run(cmd)
 		if err != nil {
