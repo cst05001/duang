@@ -70,23 +70,37 @@ func (this *Engine1) Init() error {
 }
 
 //Backend
-func (this *Engine1) AddBackend(frontend string, backends []string) error {
+func (this *Engine1) AddBackend(name string, backends []string) error {
 	return nil
 }
-func (this *Engine1) DelBackend(frontend string, backends []string) error {
+func (this *Engine1) DelBackend(name string, backends []string) error {
 	return nil
 }
 
 //Frontend
-func (this *Engine1) AddFrontend(frontend string) error {
-	frontendRoot := path.Join(this.Root, "frontend", frontend)
+func (this *Engine1) AddFrontend(name, bind string) error {
+	//目录不在则创建目录
+	frontendRoot := path.Join(this.Root, "frontend", name)
+	_, err := EtcdLs(this.Client, frontendRoot)
+	if err != nil {
+		errorCode, _, _ := ParseError(err)
+		if errorCode == "100" {
+			err = EtcdMkDir(this.Client, frontendRoot, 0)
+			if err != nil {
+				fmt.Println(err)
+				return nil
+			}
+		}
+	}
+
+	//bind
 	EtcdMkDir(this.Client, frontendRoot, 0)
-	_, err := this.Client.Set(path.Join(frontendRoot, "name"), frontend, 0)
+	_, err = this.Client.Set(path.Join(frontendRoot, "bind"), bind, 0)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (this *Engine1) DelFrontend(frontend string) error {
+func (this *Engine1) DelFrontend(name, bind string) error {
 	return nil
 }

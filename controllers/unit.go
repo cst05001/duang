@@ -286,7 +286,7 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 		//调用pipework结束
 		var deliverengine deliverengine.DeliverInterface
 		deliverengine = deliver_engine1.NewDeliver()
-		deliverengine.AddFrontend(args[0].(string))
+		deliverengine.AddFrontend(args[0].(string), "")
 
 	case dockerdengine.STATUS_ON_RUN_FAILED:
 		fmt.Printf("RunFailed: %s\n", dockerd.GetIP())

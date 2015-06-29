@@ -1,8 +1,8 @@
 package deliverengine
 
 type DeliverInterface interface {
-	AddBackend(frontend string, backends []string) error
-	DelBackend(frontend string, backends []string) error
-	AddFrontend(frontend string) error
-	DelFrontend(frontend string) error
+	AddBackend(name string, backends []string) error
+	DelBackend(name string, backends []string) error
+	AddFrontend(name, bind string) error
+	DelFrontend(name, bind string) error
 }
