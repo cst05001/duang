@@ -5,7 +5,7 @@
 </head>
 <body>
 	<form id="frm_dockerd">
-		<input name="addr" id="addr" type="text" placeholder="addr"/><br />
+		<input name="addr" id="addr" type="text" placeholder="addr: http://192.168.3.147:2375"/><br />
 		<input id="submit" type="button" value="submit" />
  	</form>
 	<script>

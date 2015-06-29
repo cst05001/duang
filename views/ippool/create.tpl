@@ -5,7 +5,7 @@
 </head>
 <body>
 	<form id="frm_create">
-		<input id="ip" type="text" /><br />
+		<input id="ip" type="text" placeholder="e.g. 192.168.3.141/24@192.168.3.51" /><br />
 		<input id="submit" type="button" value="submit" />
 	</form>
 	<script>
