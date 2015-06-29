@@ -5,8 +5,8 @@ import (
 )
 
 type DeliverInterface interface {
-	AddBackend(name string, backends []string) error
-	DelBackend(name string, backends []string) error
+	AddBackend(name string, backend *core.Backend) (*core.Backend, error)
+	DelBackend(name string, backend *core.Backend) error
 	AddFrontend(*core.Frontend) (*core.Frontend, error)
 	DelFrontend(*core.Frontend) error
 }

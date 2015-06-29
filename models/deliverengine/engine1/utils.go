@@ -18,6 +18,22 @@ func ParseError(err error) (code, text, index string) {
 	return "", "", ""
 }
 
+func MkDirIfNotExist(client *etcd.Client, path string) error {
+	_, err := EtcdLs(client, path)
+	if err != nil {
+		errorCode, _, _ := ParseError(err)
+		if errorCode == "100" {
+			err = EtcdMkDir(client, path, 0)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
 func EtcdLs(client *etcd.Client, path string) ([]string, error) {
 	result := make([]string, 0)
 	response, err := client.Get(path, true, false)

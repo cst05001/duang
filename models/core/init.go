@@ -23,7 +23,6 @@ func init() {
 		new(Ip),
 		new(Frontend),
 		new(Backend),
-		new(BackendAddr),
 	)
 
 	force, err := duangcfg.Bool("db_dropifexist")

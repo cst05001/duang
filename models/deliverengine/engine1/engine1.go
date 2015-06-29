@@ -72,10 +72,41 @@ func (this *Engine1) Init() error {
 }
 
 //Backend
-func (this *Engine1) AddBackend(name string, backends []string) error {
-	return nil
+func (this *Engine1) AddBackend(name string, backend *core.Backend) (*core.Backend, error) {
+	o := orm.NewOrm()
+	o.Using("default")
+
+	var err error
+	backend.Id, err = o.Insert(backend)
+	if err != nil {
+		return nil, err
+	}
+	err = o.Read(backend)
+	if err != nil {
+		return nil, err
+	}
+
+	//目录不在则创建目录
+	backendRoot := path.Join(this.Root, "backend", backend.Name)
+	err = MkDirIfNotExist(this.Client, backendRoot)
+	if err != nil {
+		return nil, err
+	}
+
+	serverDir := path.Join(backendRoot, "server")
+	err = MkDirIfNotExist(this.Client, serverDir)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = this.Client.Set(path.Join(serverDir, backend.Name), backend.Addr, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	return backend, nil
 }
-func (this *Engine1) DelBackend(name string, backends []string) error {
+func (this *Engine1) DelBackend(name string, backend *core.Backend) error {
 	return nil
 }
 
@@ -96,16 +127,9 @@ func (this *Engine1) AddFrontend(frontend *core.Frontend) (*core.Frontend, error
 
 	//目录不在则创建目录
 	frontendRoot := path.Join(this.Root, "frontend", frontend.Name)
-	_, err = EtcdLs(this.Client, frontendRoot)
+	err = MkDirIfNotExist(this.Client, frontendRoot)
 	if err != nil {
-		errorCode, _, _ := ParseError(err)
-		if errorCode == "100" {
-			err = EtcdMkDir(this.Client, frontendRoot, 0)
-			if err != nil {
-				fmt.Println(err)
-				return nil, err
-			}
-		}
+		return nil, err
 	}
 
 	//bind
