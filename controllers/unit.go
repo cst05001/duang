@@ -8,8 +8,6 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models"
 	"github.com/cst05001/duang/models/core"
-	"github.com/cst05001/duang/models/deliverengine"
-	deliver_engine1 "github.com/cst05001/duang/models/deliverengine/engine1"
 	"github.com/cst05001/duang/models/dockerdengine"
 	dockerd_engine1 "github.com/cst05001/duang/models/dockerdengine/engine1"
 	"github.com/cst05001/duang/models/sshclientengine"
@@ -284,9 +282,6 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 			ippool.ReleaseIP(ip.Id)
 		}
 		//调用pipework结束
-		var deliverengine deliverengine.DeliverInterface
-		deliverengine = deliver_engine1.NewDeliver()
-		deliverengine.AddFrontend(args[0].(string), "")
 
 	case dockerdengine.STATUS_ON_RUN_FAILED:
 		fmt.Printf("RunFailed: %s\n", dockerd.GetIP())

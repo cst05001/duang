@@ -3,7 +3,9 @@ package engine1
 import (
 	"fmt"
 	"github.com/astaxie/beego/config"
+	"github.com/astaxie/beego/orm"
 	"github.com/coreos/go-etcd/etcd"
+	"github.com/cst05001/duang/models/core"
 	"path"
 	"strings"
 )
@@ -78,29 +80,42 @@ func (this *Engine1) DelBackend(name string, backends []string) error {
 }
 
 //Frontend
-func (this *Engine1) AddFrontend(name, bind string) error {
+func (this *Engine1) AddFrontend(frontend *core.Frontend) (*core.Frontend, error) {
+	o := orm.NewOrm()
+	o.Using("default")
+
+	var err error
+	frontend.Id, err = o.Insert(frontend)
+	if err != nil {
+		return nil, err
+	}
+	err = o.Read(frontend)
+	if err != nil {
+		return nil, err
+	}
+
 	//目录不在则创建目录
-	frontendRoot := path.Join(this.Root, "frontend", name)
-	_, err := EtcdLs(this.Client, frontendRoot)
+	frontendRoot := path.Join(this.Root, "frontend", frontend.Name)
+	_, err = EtcdLs(this.Client, frontendRoot)
 	if err != nil {
 		errorCode, _, _ := ParseError(err)
 		if errorCode == "100" {
 			err = EtcdMkDir(this.Client, frontendRoot, 0)
 			if err != nil {
 				fmt.Println(err)
-				return nil
+				return nil, err
 			}
 		}
 	}
 
 	//bind
 	EtcdMkDir(this.Client, frontendRoot, 0)
-	_, err = this.Client.Set(path.Join(frontendRoot, "bind"), bind, 0)
+	_, err = this.Client.Set(path.Join(frontendRoot, "bind"), frontend.Bind, 0)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return frontend, nil
 }
-func (this *Engine1) DelFrontend(name, bind string) error {
+func (this *Engine1) DelFrontend(frontend *core.Frontend) error {
 	return nil
 }

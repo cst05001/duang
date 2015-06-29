@@ -6,6 +6,8 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models/core"
+	"github.com/cst05001/duang/models/deliverengine"
+	deliver_engine1 "github.com/cst05001/duang/models/deliverengine/engine1"
 	"regexp"
 	"strconv"
 )
@@ -41,16 +43,13 @@ func (this *DeliverController) FrontendCreate() {
 		return
 	}
 
-	o := orm.NewOrm()
-	o.Using("default")
+	//WriteJson(this.Ctx, frontend)
 
-	frontend.Id, err = o.Insert(frontend)
+	var deliverEngine deliverengine.DeliverInterface
+	deliverEngine = deliver_engine1.NewDeliver()
+	frontend, err = deliverEngine.AddFrontend(frontend)
 	if err != nil {
-		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		return
-	}
-	err = o.Read(frontend)
-	if err != nil {
+		fmt.Println(err)
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
