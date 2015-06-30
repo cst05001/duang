@@ -8,12 +8,13 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models"
 	"github.com/cst05001/duang/models/core"
-	//"github.com/cst05001/duang/models/deliverengine"
-	//deliver_engine1 "github.com/cst05001/duang/models/deliverengine/engine1"
+	"github.com/cst05001/duang/models/deliverengine"
+	deliver_engine1 "github.com/cst05001/duang/models/deliverengine/engine1"
 	"github.com/cst05001/duang/models/dockerdengine"
 	dockerd_engine1 "github.com/cst05001/duang/models/dockerdengine/engine1"
 	"github.com/cst05001/duang/models/sshclientengine"
 	sshclientengine1 "github.com/cst05001/duang/models/sshclientengine/engine1"
+	"regexp"
 	"strconv"
 )
 
@@ -146,6 +147,7 @@ func (this *UnitController) Update() {
 		return
 	}
 	unit.Id = int64(unitId)
+	o.LoadRelated(unit, "Parameteres")
 
 	// 事务开始
 	err = o.Begin()
@@ -183,11 +185,10 @@ func (this *UnitController) Update() {
 		if len(v.Value) == 0 || len(v.Type) == 0 {
 			continue
 		}
-		v.Unit = unit
+		//v.Unit = unit
 		_, err = o.Insert(v)
 		if err != nil {
 			WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-			return
 			err = o.Rollback()
 			if err != nil {
 				WriteJson(this.Ctx, &StatusError{Error: err.Error()})
@@ -199,11 +200,12 @@ func (this *UnitController) Update() {
 	err = o.Commit()
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		o.Rollback()
+		//o.Rollback()
 		return
 	}
 
 	fmt.Println(unit)
+
 	WriteJson(this.Ctx, unit)
 }
 
@@ -249,6 +251,7 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 	case dockerdengine.STATUS_ON_CREATE_FAILED:
 		fmt.Printf("CreateFailed: %s\n", dockerd.GetIP())
 	case dockerdengine.STATUS_ON_RUN_SUCCESSED:
+		unit := args[0].(*core.Unit)
 		fmt.Printf("RunSuccessed: %s\n", dockerd.GetIP())
 
 		//分配容器IP开始
@@ -275,7 +278,7 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 			return
 		}
 		//pipework br0 containerName 192.168.0.0/24@192.168.0.1
-		cmd := fmt.Sprintf("%s %s %s %s", duangcfg.String("pipework_path"), duangcfg.String("pipework_bridge"), args[0].(string), ip.Ip)
+		cmd := fmt.Sprintf("%s %s %s %s", duangcfg.String("pipework_path"), duangcfg.String("pipework_bridge"), unit.Name, ip.Ip)
 		fmt.Printf("CMD: %s\n", cmd)
 		err = sshclient.Run(cmd)
 		if err != nil {
@@ -283,6 +286,21 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 			ippool.ReleaseIP(ip.Id)
 		}
 		//调用pipework结束
+		var deliverEngine deliverengine.DeliverInterface
+		deliverEngine = deliver_engine1.NewDeliver()
+		for _, para := range unit.Parameteres {
+			if para.Type == "d" {
+				re := regexp.MustCompile("^(\\d+):(\\d+)$")
+				result := re.FindStringSubmatch(para.Value)
+				fPort := result[1]
+				bPort := result[2]
+
+				err = deliverEngine.Bind(fmt.Sprintf("0.0.0.0:%s", fPort), unit.Domain, fmt.Sprintf("%s:%s", ip.GetIP(), bPort))
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+		}
 
 	case dockerdengine.STATUS_ON_RUN_FAILED:
 		fmt.Printf("RunFailed: %s\n", dockerd.GetIP())

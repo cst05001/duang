@@ -7,16 +7,17 @@
 	<form id="frm_unit">
 		<input name="name" id="name" type="text" placeholder="name" value="{{$.Unit.Name}}"/><br />
 		<input name="image" id="image" type="text" placeholder="image" value="{{$.Unit.Image}}"/><br />
+		<input name="domain" id="domain" type="text" placeholder="domain" value="{{$.Unit.Domain}}"/><br />
 		<input name="number" id="number" type="number" placeholder="number" value="{{$.Unit.Number}}"/><br />
 		{{range $_, $p := $.Unit.Parameteres}}
 		<div class="div_parameteres">
 		<!-- 此处有bug，等 Type 表实现了一定要改 -->
-		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" value="{{$p.Value}}" /><select class="select_parameter"><option value="v" {{if eq $p.Type "v"}}selected="selected"{{end}}>Volume</option><option value="p" {{if eq $p.Type "p"}}selected="selected"{{end}}>Expose</option></select><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" />
+		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" value="{{$p.Value}}" /><select class="select_parameter"><option value="v" {{if eq $p.Type "v"}}selected="selected"{{end}}>Volume</option><option value="p" {{if eq $p.Type "p"}}selected="selected"{{end}}>Expose</option><option value="d" {{if eq $p.Type "d"}}selected="selected"{{end}}>前后端端口映射</option></select><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" />
 		</div>
 		{{end}}
 		<div class="div_parameteres">
 		<!-- 此处有bug，等 Type 表实现了一定要改 -->
-		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" /><select class="select_parameter"><option value="v">Volume</option></select><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" />
+		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" /><select class="select_parameter"><option value="v">Volume</option><option value="p">Expose</option><option value="d">前后端端口映射</option></select><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" />
 		</div>		
 
 		<input id="submit" type="button" value="submit" />
@@ -44,6 +45,7 @@
 			var unit = new Object();
 			unit.name = $("#name").val();
 			unit.image = $("#image").val();
+			unit.domain = $("#domain").val();
 			unit.number = parseInt($("#number").val());
 			unit.parameteres = new Array();
 			$(".div_parameteres").each(function() {

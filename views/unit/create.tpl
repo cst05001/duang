@@ -7,9 +7,10 @@
 	<form id="frm_unit">
 		<input name="name" id="name" type="text" placeholder="name"/><br />
 		<input name="image" id="image" type="text" placeholder="image "/><br />
+		<input name="domain" id="domain" type="text" placeholder="domain" /><br />
 		<input name="number" id="number" type="number" placeholder="number" /><br />
 		<div class="div_parameteres">
-		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" /><select class="select_parameter"><option value="v">Volume</option><option value="p">Expose</option></select><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" />
+		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" /><select class="select_parameter"><option value="v">Volume</option><option value="p">Expose</option><option value="d">前后端端口映射</option></select><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" />
 		</div>
 		<input id="submit" type="button" value="submit" />
  	</form>
@@ -19,7 +20,7 @@
 		}
 		function add_parameter() {
 			$(this).parent().after('		<div class="div_parameteres"> \
-		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" /><select class="select_parameter"><option value="v">Volume</option><option value="p">Expose</option><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" /> \
+		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" /><select class="select_parameter"><option value="v">Volume</option><option value="p">Expose</option><option value="d">前后端端口映射</option><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" /> \
 		</div>');
 
 			$(".btn_add_parameter").off("click");
@@ -37,6 +38,7 @@
 			var unit = new Object();
 			unit.name = $("#name").val();
 			unit.image = $("#image").val();
+			unit.domain = $("#domain").val();
 			unit.number = parseInt($("#number").val());
 			unit.parameteres = new Array();
 			$(".div_parameteres").each(function() {

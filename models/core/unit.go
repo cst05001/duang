@@ -5,6 +5,7 @@ type Unit struct {
 	Name        string `orm:"unique"`
 	Image       string
 	Number      int64
+	Domain      string
 	Parameteres []*UnitParameter `orm:"reverse(many);on_delete(set_null)"`
 	Dockerd     []*Dockerd       `orm:"rel(m2m)"`
 }

@@ -13,3 +13,10 @@ type Backend struct {
 	Addr     string
 	Frontend *Frontend `orm:"rel(fk)"`
 }
+
+type Deliver struct {
+	Id           int64
+	Unit         *Unit `orm:"rel(fk)"`
+	FrontendPort uint
+	BackendPort  uint
+}

@@ -1,12 +1,13 @@
 package engine1
 
 import (
+	"fmt"
 	"github.com/coreos/go-etcd/etcd"
 	"regexp"
 )
 
 func ParseError(err error) (code, text, index string) {
-	re := regexp.MustCompile("^\\s*(.+)\\s*:\\s*(.+)\\s*\\[(.+)\\]\\s*$")
+	re := regexp.MustCompile("^\\s*(\\d+)\\s*:\\s*(.+)\\s*\\[(\\d+)\\]\\s*$")
 
 	if re.MatchString(err.Error()) {
 		result := re.FindStringSubmatch(err.Error())
@@ -25,11 +26,14 @@ func MkDirIfNotExist(client *etcd.Client, path string) error {
 		if errorCode == "100" {
 			err = EtcdMkDir(client, path, 0)
 			if err != nil {
+				fmt.Println("debug: 1")
 				return err
 			}
 			return nil
+		} else {
+			fmt.Println("debug: 2")
+			return err
 		}
-		return err
 	}
 	return nil
 }
