@@ -1,0 +1,9 @@
+[template]
+src = "haproxy.cfg.tmpl"
+dest = "/etc/haproxy/haproxy.cfg"
+keys = [
+    "/haproxy",
+]
+#check_cmd = "haproxy -f {{.src}} -c"
+#reload_cmd = "service haproxy reload"
+
