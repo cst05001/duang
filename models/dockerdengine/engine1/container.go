@@ -21,6 +21,51 @@ func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Docke
 		HostConfig: hostConfig,
 	}
 	containerCreateResponse := &types.ContainerCreateResponse{}
+
+	for _, p := range unit.Parameteres {
+		switch p.Type {
+		case "v":
+			hostConfig.Binds = append(hostConfig.Binds, p.Value)
+		case "p":
+			rePort := regexp.MustCompile(".+/.+")
+			re3 := regexp.MustCompile("(.+):(.+):(.+)")
+			if re3.MatchString(p.Value) {
+				t := re3.FindStringSubmatch(p.Value)
+				portBinding := &docker.PortBinding{
+					HostIP:   t[1],
+					HostPort: t[2],
+				}
+				var containerPort string
+				if rePort.MatchString(t[3]) {
+					containerPort = t[3]
+				} else {
+					containerPort = fmt.Sprintf("%s/tcp", t[3])
+				}
+				hostConfig.PortBindings = make(map[docker.Port][]docker.PortBinding)
+				hostConfig.PortBindings[docker.Port(containerPort)] = append(hostConfig.PortBindings[docker.Port(containerPort)], *portBinding)
+				break
+			}
+			re2 := regexp.MustCompile("(.+):(.+)")
+			if re2.MatchString(p.Value) {
+				t := re2.FindStringSubmatch(p.Value)
+				portBinding := &docker.PortBinding{
+					HostPort: t[1],
+				}
+				hostConfig.PortBindings = make(map[docker.Port][]docker.PortBinding)
+				hostConfig.PortBindings[docker.Port(t[2])] = append(hostConfig.PortBindings[docker.Port(t[2])], *portBinding)
+				break
+			}
+			re1 := regexp.MustCompile("(.+)")
+			if re1.MatchString(p.Value) {
+				t := re2.FindStringSubmatch(p.Value)
+				portBinding := &docker.PortBinding{}
+				hostConfig.PortBindings = make(map[docker.Port][]docker.PortBinding)
+				hostConfig.PortBindings[docker.Port(t[1])] = append(hostConfig.PortBindings[docker.Port(t[1])], *portBinding)
+				break
+			}
+		}
+	}
+
 	for dockerd, client := range this.ClientMap {
 		container, err := client.CreateContainer(*createContainerOptions)
 		if err != nil {
@@ -34,49 +79,7 @@ func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Docke
 		callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_SUCCESSED, unit)
 
 		// start container
-		for _, p := range unit.Parameteres {
-			switch p.Type {
-			case "v":
-				hostConfig.Binds = append(hostConfig.Binds, p.Value)
-			case "p":
-				rePort := regexp.MustCompile(".+/.+")
-				re3 := regexp.MustCompile("(.+):(.+):(.+)")
-				if re3.MatchString(p.Value) {
-					t := re3.FindStringSubmatch(p.Value)
-					portBinding := &docker.PortBinding{
-						HostIP:   t[1],
-						HostPort: t[2],
-					}
-					var containerPort string
-					if rePort.MatchString(t[3]) {
-						containerPort = t[3]
-					} else {
-						containerPort = fmt.Sprintf("%s/tcp", t[3])
-					}
-					hostConfig.PortBindings = make(map[docker.Port][]docker.PortBinding)
-					hostConfig.PortBindings[docker.Port(containerPort)] = append(hostConfig.PortBindings[docker.Port(containerPort)], *portBinding)
-					break
-				}
-				re2 := regexp.MustCompile("(.+):(.+)")
-				if re2.MatchString(p.Value) {
-					t := re2.FindStringSubmatch(p.Value)
-					portBinding := &docker.PortBinding{
-						HostPort: t[1],
-					}
-					hostConfig.PortBindings = make(map[docker.Port][]docker.PortBinding)
-					hostConfig.PortBindings[docker.Port(t[2])] = append(hostConfig.PortBindings[docker.Port(t[2])], *portBinding)
-					break
-				}
-				re1 := regexp.MustCompile("(.+)")
-				if re1.MatchString(p.Value) {
-					t := re2.FindStringSubmatch(p.Value)
-					portBinding := &docker.PortBinding{}
-					hostConfig.PortBindings = make(map[docker.Port][]docker.PortBinding)
-					hostConfig.PortBindings[docker.Port(t[1])] = append(hostConfig.PortBindings[docker.Port(t[1])], *portBinding)
-					break
-				}
-			}
-		}
+
 		fmt.Println(hostConfig.PortBindings)
 		err = client.StartContainer(containerCreateResponse.ID, hostConfig)
 		if err != nil {
