@@ -103,6 +103,9 @@ func (this *UnitController) List() {
 	}
 	for k, _ := range unitList {
 		o.LoadRelated(&unitList[k], "Parameteres")
+		for _, p := range unitList[k].Parameteres {
+			p.Unit = nil
+		}
 	}
 
 	WriteJson(this.Ctx, unitList)
@@ -141,43 +144,48 @@ func (this *UnitController) Update() {
 	o.Using("default")
 
 	unit := &core.Unit{}
+	unit.Id = int64(unitId)
+	err = o.Read(unit)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+	//o.LoadRelated(unit, "Parameteres")
+
+	err = o.Begin()
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+	// 删除全部关联参数
+	_, err = o.QueryTable("UnitParameter").Filter("unit_id", int64(unit.Id)).Delete()
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		err = o.Rollback()
+		if err != nil {
+			WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+			return
+		}
+		return
+	}
+
 	err = json.Unmarshal(this.Ctx.Input.RequestBody, unit)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 	unit.Id = int64(unitId)
-	o.LoadRelated(unit, "Parameteres")
-
-	// 事务开始
-	err = o.Begin()
-	if err != nil {
-		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		return
-	}
 
 	_, err = o.Update(unit)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		return
 		err = o.Rollback()
 		if err != nil {
 			WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 			return
 		}
-		return
-	}
 
-	// 删除全部关联参数
-	_, err = o.QueryTable("UnitParameter").Filter("unit_id", int64(unit.Id)).Delete()
-	if err != nil {
-		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
-		err = o.Rollback()
-		if err != nil {
-			WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-			return
-		}
 	}
 
 	// 插入新的参数
@@ -185,7 +193,7 @@ func (this *UnitController) Update() {
 		if len(v.Value) == 0 || len(v.Type) == 0 {
 			continue
 		}
-		//v.Unit = unit
+		v.Unit = unit
 		_, err = o.Insert(v)
 		if err != nil {
 			WriteJson(this.Ctx, &StatusError{Error: err.Error()})
@@ -194,17 +202,23 @@ func (this *UnitController) Update() {
 				WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 				return
 			}
+
+			return
 		}
 	}
-
 	err = o.Commit()
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		//o.Rollback()
 		return
 	}
 
 	fmt.Println(unit)
+	for _, v := range unit.Parameteres {
+		if len(v.Value) == 0 || len(v.Type) == 0 {
+			continue
+		}
+		v.Unit = nil
+	}
 
 	WriteJson(this.Ctx, unit)
 }

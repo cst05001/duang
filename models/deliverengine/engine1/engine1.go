@@ -90,7 +90,7 @@ func (this *Engine1) Bind(bind, domain string, backend string) error {
 	if err != nil {
 		return err
 	}
-	backendDir := path.Join(domainDir, "backends")
+	backendDir := path.Join(domainDir, domain, "backends")
 	err = MkDirIfNotExist(this.Client, backendDir)
 	if err != nil {
 		return err

@@ -28,7 +28,7 @@
 		}
 		function add_parameter() {
 			$(this).parent().after('		<div class="div_parameteres"> \
-		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" /><select class="select_parameter"><option value="v">Volume</option><option value="p">Expose</option></select><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" /> \
+		<input name="parameteres[]" id="parameteres" class="input_parameter" type="text" placeholder="parameter" /><select class="select_parameter"><option value="v">Volume</option><option value="p">Expose</option><option value="d">前后端端口映射</option></select><input id="btn_add_parameter" class="btn_add_parameter" type="button" value="+" /><input id="btn_del_parameter" class="btn_del_parameter" type="button" value="-" /> \
 		</div>');
 
 			$(".btn_add_parameter").off("click");
