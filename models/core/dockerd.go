@@ -4,6 +4,8 @@ import (
 	"regexp"
 )
 
+//review at 20150702
+
 type Dockerd struct {
 	Id   int64
 	Addr string  `orm:"unique"`

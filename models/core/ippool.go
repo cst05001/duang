@@ -3,10 +3,13 @@ package core
 import (
 	"errors"
 	"fmt"
-	"github.com/astaxie/beego/orm"
 	"regexp"
+
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
 )
 
+//review at 20150702
 /*
 	此功能仅限用bridge独立IP方式运行container使用
 */
@@ -74,24 +77,24 @@ func (this *IpPool) GetFreeIP() (*Ip, error) {
 	ip := &Ip{}
 	err = o.QueryTable("Ip").Filter("status", 1).Limit(1).One(ip)
 	if err != nil {
-		fmt.Println(err)
+		beego.Error(err)
 		return nil, err
 	}
 
 	err = o.Begin()
 	if err != nil {
-		fmt.Println(err)
+		beego.Error(err)
 		return nil, err
 	}
 
 	ip.Status = 0
 	_, err = o.Update(ip)
 	if err != nil {
-		fmt.Println(err)
-		err2 := o.Rollback()
-		if err2 != nil {
-			fmt.Println(err2)
-			return nil, err2
+		beego.Error(err)
+		errRollback := o.Rollback()
+		if errRollback != nil {
+			beego.Error(errRollback)
+			return nil, errRollback
 		}
 		return nil, err
 	}
@@ -145,10 +148,6 @@ func (this *IpPool) ChangeState(iplist []*Ip, state uint8) error {
 		return err
 	}
 	return nil
-}
-
-func (this *IpPool) ListIPById(n int64) ([]*Ip, error) {
-	return nil, nil
 }
 
 //获取所有IP
@@ -223,6 +222,14 @@ func (this *IpPool) AddIP(ip *Ip) (*Ip, error) {
 }
 
 //从IP池删除IP
-func (this *IpPool) DelIP(ip string) error {
+func (this *IpPool) DelIP(id int64) error {
+	o := orm.NewOrm()
+	o.Using("default")
+	
+	ip := &Ip{Id: id}
+	_, err := o.Delete(ip)
+	if err != nil {
+		return err
+	}
 	return nil
 }

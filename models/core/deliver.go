@@ -1,5 +1,9 @@
 package core
 
+//review at 20150702
+
+/*
+这段 struct 已经弃用，用 Deliver 替代。
 type Frontend struct {
 	Id      int64
 	Name    string
@@ -13,7 +17,7 @@ type Backend struct {
 	Addr     string
 	Frontend *Frontend `orm:"rel(fk)"`
 }
-
+*/
 type Deliver struct {
 	Id           int64
 	Unit         *Unit `orm:"rel(fk)"`

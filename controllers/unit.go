@@ -276,6 +276,7 @@ func (this *UnitController) Run() {
 	*/
 }
 
+//Reviewed at 20150702
 func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{}) {
 	ippool := core.NewIpPool()
 	var ip *core.Ip

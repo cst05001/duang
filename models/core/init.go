@@ -2,10 +2,13 @@ package core
 
 import (
 	"fmt"
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/go-sql-driver/mysql"
 )
+
+//review at 20150702
 
 func init() {
 	duangcfg, err := config.NewConfig("ini", "conf/duang.conf")
@@ -21,8 +24,8 @@ func init() {
 		new(UnitParameter),
 		new(Dockerd),
 		new(Ip),
-		new(Frontend),
-		new(Backend),
+		//new(Frontend),
+		//new(Backend),
 	)
 
 	force, err := duangcfg.Bool("db_dropifexist")
@@ -33,7 +36,7 @@ func init() {
 	verbose := true
 	err = orm.RunSyncdb("default", force, verbose)
 	if err != nil {
-		fmt.Println(err)
+		beego.Error(err)
 	}
 
 }
