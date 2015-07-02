@@ -100,35 +100,39 @@ func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Docke
 		pullImageOptions.Tag = "latest"
 	}
 
-	for dockerd, client := range this.ClientMap {
-		//第二个参数支持registry身份认证，还没处理。
-		err := client.PullImage(pullImageOptions, docker.AuthConfiguration{})
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
+	for ptrDockerd, ptrClient := range this.ClientMap {
+		dockerd := &(*ptrDockerd)
+		client := &(*ptrClient)
+		go func() {
+			//第二个参数支持registry身份认证，还没处理。
+			err := client.PullImage(pullImageOptions, docker.AuthConfiguration{})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 
-		container, err := client.CreateContainer(*createContainerOptions)
-		if err != nil {
-			fmt.Println(err)
-			containerCreateResponse.Warnings = append(containerCreateResponse.Warnings, err.Error())
-			callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_FAILED, unit)
-			continue
-		}
-		fmt.Println(container)
-		containerCreateResponse.ID = container.ID
-		callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_SUCCESSED, unit)
+			container, err := client.CreateContainer(*createContainerOptions)
+			if err != nil {
+				fmt.Println(err)
+				containerCreateResponse.Warnings = append(containerCreateResponse.Warnings, err.Error())
+				callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_FAILED, unit)
+				return
+			}
+			fmt.Println(container)
+			containerCreateResponse.ID = container.ID
+			callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_SUCCESSED, unit)
 
-		// start container
+			// start container
 
-		fmt.Println(hostConfig.PortBindings)
-		err = client.StartContainer(containerCreateResponse.ID, hostConfig)
-		if err != nil {
-			fmt.Sprintf("StartContainer: Faile with error %s\n", err)
-			callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_FAILED, unit)
-			continue
-		}
-		callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_SUCCESSED, unit)
+			fmt.Println(hostConfig.PortBindings)
+			err = client.StartContainer(containerCreateResponse.ID, hostConfig)
+			if err != nil {
+				fmt.Sprintf("StartContainer: Faile with error %s\n", err)
+				callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_FAILED, unit)
+				return
+			}
+			callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_SUCCESSED, unit)
+		}()
 	}
 	return nil
 }
