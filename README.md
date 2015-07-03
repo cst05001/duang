@@ -31,75 +31,68 @@ duang是一个以业务为单位的，分发器+docker集群的方案。前端�
 
 ##网络接口描述
 
-###/dockerd
+###Struct Description
 
-####/dockerd/create
-
-#####方法 GET
-
-创建 dockerd 的前端页面
-
-#####方法 POST
-
-参数
-
-addr=<http|https|unix>://&lt;IP:PORT|socket path&gt;
-
-####/dockerd/list
-
-#####方法 GET
-
-###/unit
-
-####/unit/create
-
-#####方法 GET
-
-创建 Unit 的前端页面
-
-#####方法 POST
-
-参数
-
-json格式
+####UnitStruct
 
 	{
-		"name":"centos",
-		"image":"centos",
-		"number":2,"
-		parameteres":[
+		name:	"nginx:latest",
+		number:	2,
+		domain:	"www.example.com",
+		parameteres:
+		[
 			{
-				"value":"/tmp:/tmp:ro",
-				"type":"v"
+				value:	"/etc/localtime:/etc/localtime:ro",
+				type:	"v",
 			},
 			{
-				"value":"/var/log:/hostlog:ro",
-				"type":"v"
+				value:	"8080:80",
+				type:	"d",
 			},
-			{
-				"value":"80:80",
-				"type":"v"
-			}
 		]
 	}
 
-####/unit/update/&lt;unit ID&gt;
+####IppoolStruct
 
-#####方法 GET
+	{
+		ip:	"192.168.8.100/24@192.168.8.1",
+		status:	1,
+	}
 
-修改 Unit 的前端页面
+####DockerdStruct
 
-#####方法 POST
+	{
+		addr:	"http://192.168.3.188:2375",
+	}
 
-参数
 
-同 /unit/create
+###Interface
 
-####/unit/run/&lt;unit ID&gt;
+* /unit/create
 
-#####方法 GET
+POST UnitStruct
 
-启动 Unit
+* /unit/ID/update
+
+POST UnitStruct
+
+* /unit/ID/delete
+
+* /unit/ID/run
+
+* /dockerd/ID/update
+
+POST UnitStruct
+
+* /dockerd/ID/delete
+
+* /ippool/ID/release
+
+* /ippool/ID/delete
+
+* /ippool/create
+
+POST IppoolStruct
 
 ##和confd配合的etcd目录结构
 
