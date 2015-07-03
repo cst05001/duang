@@ -99,6 +99,24 @@ func (this *UnitController) Create() {
 	WriteJson(this.Ctx, unit)
 }
 
+func (this *UnitController) Delete() {
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+
+	o := orm.NewOrm()
+	o.Using("default")
+
+	unit := &core.Unit{Id: int64(id)}
+	_, err = o.Delete(unit)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+}
+
 //Reviewed at 20150702
 func (this *UnitController) List() {
 	o := orm.NewOrm()
@@ -121,7 +139,7 @@ func (this *UnitController) List() {
 }
 
 func (this *UnitController) UpdateHtml() {
-	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":unitid"))
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
@@ -129,7 +147,7 @@ func (this *UnitController) UpdateHtml() {
 
 	o := orm.NewOrm()
 	o.Using("default")
-	unit := &core.Unit{Id: int64(unitId)}
+	unit := &core.Unit{Id: int64(id)}
 	err = o.Read(unit)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
@@ -144,7 +162,7 @@ func (this *UnitController) UpdateHtml() {
 
 //Reviewed at 20150702
 func (this *UnitController) Update() {
-	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":unitid"))
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
@@ -153,7 +171,7 @@ func (this *UnitController) Update() {
 	o := orm.NewOrm()
 	o.Using("default")
 
-	unit := &core.Unit{Id: int64(unitId)}
+	unit := &core.Unit{Id: int64(id)}
 	/* 这段代码可能没必要，因为update的时候，前端会发送全部新Unit的信息，所以不用读取旧数据
 	err = o.Read(unit)
 	if err != nil {
@@ -190,7 +208,7 @@ func (this *UnitController) Update() {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
-	unit.Id = int64(unitId)
+	unit.Id = int64(id)
 
 	_, err = o.Update(unit)
 	if err != nil {
@@ -264,7 +282,7 @@ func (this *UnitController) Run() {
 	client = dockerd_engine1.NewDockerClientEng1(unit)
 	/*
 		运行Unit，并附上回调函数，这是容器Create 和 Run成功、失败一共4个状态的回调函数。
-		详情请参考 models/dockerengine/dockerclient.go 
+		详情请参考 models/dockerengine/dockerclient.go
 	*/
 	err = client.Run(unit, dockerdCallbackFunc)
 	if err != nil {
@@ -283,21 +301,18 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 	var err error
 	switch status {
 	case dockerdengine.STATUS_ON_CREATE_SUCCESSED:
-		beego.Debug("在宿主机 ", dockerd.GetIP(), " 创建容器成功")
 
 	case dockerdengine.STATUS_ON_CREATE_FAILED:
-		beego.Error("CreateFailed: ", dockerd.GetIP())
+
 	case dockerdengine.STATUS_ON_RUN_SUCCESSED:
 		/*
 			参考: models/dockerengine/engine1/container.go
 			DockerEngine给回调函数传入的第一个参数，是*core.Unit。这个行为取决于各个Engine的实现，请大家遵守。
 			如果不遵守，需要修改本回调函数逻辑。
-			
+
 			代码逻辑：Run container -> 分配IP -> 把IP提交到前端分发器
 		*/
 		unit := args[0].(*core.Unit)
-		fmt.Printf("RunSuccessed: %s\n", dockerd.GetIP())
-
 		/*
 			从ip池获取可以分配给container的IP。
 			注意，这里不是dockerd宿主机的IP。是container的IP。
@@ -306,10 +321,9 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 		*/
 		ip, err = ippool.GetFreeIP()
 		if err != nil {
-			beego.Error(err)
+			beego.Error("Cannot get free IP at ", dockerd.GetIP(), " :", err)
 			return
 		}
-		beego.Debug("分配容器IP: ", ip.GetIP())
 
 		//通过 ssh client 调用pipework
 		duangcfg, err := config.NewConfig("ini", "conf/duang.conf")
@@ -323,20 +337,17 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 		//通过密钥对访问ssh服务器，也就是dockerd所在的服务器，也就是宿主机。
 		sshclient, err = sshclientengine1.NewSSLClient(fmt.Sprintf("%s:%s", dockerd.GetIP(), duangcfg.String("ssh_port")), duangcfg.String("ssh_user"), duangcfg.String("ssh_keypath"))
 		if err != nil {
-			beego.Error(err)
 			ippool.ReleaseIP(ip.Id)
 			return
 		}
 		//pipework br0 containerName 192.168.0.0/24@192.168.0.1
 		cmd := fmt.Sprintf("%s %s %s %s", duangcfg.String("pipework_path"), duangcfg.String("pipework_bridge"), unit.Name, ip.Ip)
-		beego.Debug("CMD: ", cmd)
 		err = sshclient.Run(cmd)
 		if err != nil {
-			beego.Error(err)
 			ippool.ReleaseIP(ip.Id)
 			return
 		}
-		
+
 		//调用前端分发器，把container IP分发到 confd+HAProxy
 		var deliverEngine deliverengine.DeliverInterface
 		deliverEngine = deliver_engine1.NewDeliver()
@@ -356,6 +367,5 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 		}
 
 	case dockerdengine.STATUS_ON_RUN_FAILED:
-		beego.Error("RunFailed: ", dockerd.GetIP())
 	}
 }

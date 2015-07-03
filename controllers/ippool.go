@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models/core"
 	"regexp"
 	"strconv"
@@ -22,6 +23,22 @@ func (this *IPPoolController) Get() {
 func (this *IPPoolController) CreateHtml() {
 	this.TplNames = "ippool/create.tpl"
 	this.Render()
+}
+
+func (this *IPPoolController) Delete() {
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+	o := orm.NewOrm()
+	o.Using("default")
+	ip := &core.Ip{Id: int64(id)}
+	_, err = o.Delete(ip)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
 }
 
 func (this *IPPoolController) Create() {

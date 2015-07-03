@@ -11,22 +11,27 @@ func init() {
 	beego.SetStaticPath("/css", "static/css")
 
 	beego.Router("/", &controllers.MainController{})
+
+	beego.Router("/unit/list", &controllers.UnitController{}, "get:List")
 	beego.Router("/unit/create", &controllers.UnitController{}, "get:CreateHtml")
 	beego.Router("/unit/create", &controllers.UnitController{}, "post:Create")
-	beego.Router("/unit/list", &controllers.UnitController{}, "get:List")
-	beego.Router("/unit/update/:unitid:int", &controllers.UnitController{}, "get:UpdateHtml")
-	beego.Router("/unit/update/:unitid:int", &controllers.UnitController{}, "post:Update")
-	beego.Router("/unit/run/:unitid:int", &controllers.UnitController{}, "*:Run")
+	beego.Router("/unit/:id:int/update", &controllers.UnitController{}, "get:UpdateHtml")
+	beego.Router("/unit/:id:int/update", &controllers.UnitController{}, "post:Update")
+	beego.Router("/unit/:id:int/run", &controllers.UnitController{}, "get:Run")
+	beego.Router("/unit/:id:int/delete", &controllers.UnitController{}, "get:Delete")
 
+	beego.Router("/dockerd/list", &controllers.DockerdController{}, "get:List")
 	beego.Router("/dockerd/create", &controllers.DockerdController{}, "get:CreateHtml")
 	beego.Router("/dockerd/create", &controllers.DockerdController{}, "post:Create")
-	beego.Router("/dockerd/list", &controllers.DockerdController{}, "get:List")
+	beego.Router("/dockerd/:id:int/update", &controllers.DockerdController{}, "get:Update")
+	beego.Router("/dockerd/:id:int/delete", &controllers.DockerdController{}, "get:Delete")
 
-	beego.Router("/ippool/create", &controllers.IPPoolController{}, "get:CreateHtml")
-	beego.Router("/ippool/create", &controllers.IPPoolController{}, "post:Create")
 	beego.Router("/ippool/list", &controllers.IPPoolController{}, "get:ListAll")
 	beego.Router("/ippool/list/used", &controllers.IPPoolController{}, "get:ListUsed")
 	beego.Router("/ippool/list/free", &controllers.IPPoolController{}, "get:ListFree")
-	beego.Router("/ippool/release/:id:int", &controllers.IPPoolController{}, "get:Release")
+	beego.Router("/ippool/create", &controllers.IPPoolController{}, "get:CreateHtml")
+	beego.Router("/ippool/create", &controllers.IPPoolController{}, "post:Create")
+	beego.Router("/ippool/:id:int/release", &controllers.IPPoolController{}, "get:Release")
+	beego.Router("/ippool/:id:int/delete", &controllers.IPPoolController{}, "get:Delete")
 
 }

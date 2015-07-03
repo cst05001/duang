@@ -7,6 +7,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/cst05001/duang/models/core"
 	"regexp"
+	"strconv"
 	//engine "github.com/cst05001/duang/models/dockerclienteng1"
 )
 
@@ -18,6 +19,56 @@ func (this *DockerdController) Get() {
 	this.Data["Website"] = "beego.me"
 	this.Data["Email"] = "astaxie@gmail.com"
 	this.TplNames = "index.tpl"
+}
+
+func (this *DockerdController) Delete() {
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+
+	dockerd := &core.Dockerd{}
+	err = json.Unmarshal(this.Ctx.Input.RequestBody, dockerd)
+	if err != nil {
+		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+	dockerd.Id = int64(id)
+	o := orm.NewOrm()
+	o.Using("default")
+	_, err = o.Delete(dockerd)
+	if err != nil {
+		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+}
+
+func (this *DockerdController) Update() {
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+
+	dockerd := &core.Dockerd{}
+	err = json.Unmarshal(this.Ctx.Input.RequestBody, dockerd)
+	if err != nil {
+		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+	dockerd.Id = int64(id)
+	o := orm.NewOrm()
+	o.Using("default")
+	_, err = o.Update(dockerd)
+	if err != nil {
+		fmt.Println(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
 }
 
 func (this *DockerdController) CreateHtml() {
