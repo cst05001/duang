@@ -1,5 +1,6 @@
 package engine1
 
+//review at 20150703
 import (
 	"fmt"
 	"github.com/coreos/go-etcd/etcd"
@@ -20,7 +21,7 @@ func ParseError(err error) (code, text, index string) {
 }
 
 func MkDirIfNotExist(client *etcd.Client, path string) error {
-	_, err := EtcdLs(client, path)
+	_, err := Ls(client, path)
 	if err != nil {
 		errorCode, _, _ := ParseError(err)
 		if errorCode == "100" {
@@ -38,7 +39,7 @@ func MkDirIfNotExist(client *etcd.Client, path string) error {
 	return nil
 }
 
-func EtcdLs(client *etcd.Client, path string) ([]string, error) {
+func Ls(client *etcd.Client, path string) ([]string, error) {
 	result := make([]string, 0)
 	response, err := client.Get(path, true, false)
 	if err != nil {
