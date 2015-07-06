@@ -95,6 +95,7 @@ func (this *MCscheduler) Init() error {
 }
 
 func (this *MCscheduler) UpdateScore() error {
+	//这里应该改成多线程。
 	for k, _ := range this.DockerdForSortList {
 		ip := this.DockerdForSortList[k].Dockerd.GetIP()
 		wsnmp, err := wapsnmp.NewWapSNMP(ip, this.Community, this.Version, time.Duration(this.Timeout)*time.Second, this.Retry)
