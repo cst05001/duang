@@ -257,7 +257,7 @@ func (this *UnitController) Update() {
 
 //Reviewed at 20150702
 func (this *UnitController) Run() {
-	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":unitid"))
+	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return

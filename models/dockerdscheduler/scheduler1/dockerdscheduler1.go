@@ -10,7 +10,7 @@ type DockerdScheduler1 struct {
 	Count int64
 }
 
-func NewDockerdScheduler1() *DockerdScheduler1 {
+func NewScheduler() *DockerdScheduler1 {
 	return &DockerdScheduler1{Count: 0}
 }
 
@@ -35,9 +35,9 @@ func (this *DockerdScheduler1) GetDockerd(n int64) []*core.Dockerd {
 		fmt.Println(err)
 		return nil
 	}
-	if this.Count + n > cnt {
+	if this.Count+n > cnt {
 		dockerdList2 := make([]*core.Dockerd, 0)
-		_, err = o.QueryTable("dockerd").Limit(this.Count + n - cnt, 0).All(&dockerdList)
+		_, err = o.QueryTable("dockerd").Limit(this.Count+n-cnt, 0).All(&dockerdList)
 		if err != nil {
 			fmt.Println(err)
 			return nil
