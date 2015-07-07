@@ -6,6 +6,7 @@ type Unit struct {
 	Image       string
 	Number      int64
 	Domain      string
+	Status      uint8            `orm:default(0)`
 	Parameteres []*UnitParameter `orm:"reverse(many)"	json:"-"`
 	Dockerd     []*Dockerd       `orm:"rel(m2m)"	json:"-"`
 }

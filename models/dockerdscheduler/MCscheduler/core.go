@@ -3,12 +3,13 @@ package MCscheduler
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/orm"
 	"github.com/cdevr/WapSNMP"
 	"github.com/cst05001/duang/models/core"
-	"time"
 )
 
 type DockerdForSort struct {
@@ -106,20 +107,36 @@ func (this *MCscheduler) UpdateScore() error {
 		}
 
 		//获取剩余内存
-		table, err := wsnmp.GetTable(wapsnmp.MustParseOid(".1.3.6.1.4.1.2021.4.6"))
+		v, err := wsnmp.Get(wapsnmp.MustParseOid(".1.3.6.1.4.1.2021.4.6.0"))
 		if err != nil {
-			beego.Error("Get SNMP .1.3.6.1.4.1.2021.4.6 err at: ", ip, " with error: ", err)
+			beego.Error("Get SNMP .1.3.6.1.4.1.2021.4.6.0 err at: ", ip, " with error: ", err)
 			return err
 		}
 		var memAvailReal int64
-		for _, v := range table {
-			memAvailReal = v.(int64)
-			break
-		}
+		memAvailReal = v.(int64)
 		beego.Debug(ip, " memAvailReal: ", memAvailReal)
+
+		v, err = wsnmp.Get(wapsnmp.MustParseOid(".1.3.6.1.4.1.2021.4.14.0"))
+		if err != nil {
+			beego.Error("Get SNMP .1.3.6.1.4.1.2021.4.14.0 err at: ", ip, " with error: ", err)
+			return err
+		}
+		var memBuffer int64
+		memBuffer = v.(int64)
+		beego.Debug(ip, " memBuffer: ", memBuffer)
+
+		v, err = wsnmp.Get(wapsnmp.MustParseOid(".1.3.6.1.4.1.2021.4.15.0"))
+		if err != nil {
+			beego.Error("Get SNMP .1.3.6.1.4.1.2021.4.15.0 err at: ", ip, " with error: ", err)
+			return err
+		}
+		var memCached int64
+		memCached = v.(int64)
+		beego.Debug(ip, " memCached: ", memCached)
+
 		//获取CPU信息
 		//线程数
-		table, err = wsnmp.GetTable(wapsnmp.MustParseOid(".1.3.6.1.2.1.25.3.3.1.2"))
+		table, err := wsnmp.GetTable(wapsnmp.MustParseOid(".1.3.6.1.2.1.25.3.3.1.2"))
 		if err != nil {
 			beego.Error("Get SNMP .1.3.6.1.2.1.25.3.3.1.2 err at: ", ip, " with error: ", err)
 			return err
@@ -139,7 +156,7 @@ func (this *MCscheduler) UpdateScore() error {
 		}
 		//计分
 		//可用内存 * (线程数 * (1 - CPU负载)) = 可用内存 * (线程数 * 空闲CPU资源)
-		this.DockerdForSortList[k].Score = int64(float64(memAvailReal) * (float64(threadNum) * (float64(1) - load)))
+		this.DockerdForSortList[k].Score = int64(float64(memAvailReal+memBuffer+memCached) * (float64(threadNum) * (float64(1) - load)))
 	}
 	return nil
 }

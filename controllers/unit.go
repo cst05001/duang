@@ -277,6 +277,13 @@ func (this *UnitController) Run() {
 	//向调度器索要指定数量的dockerd，用来运行container。调度器决定了container跑在哪几台机器上。
 	unit.Dockerd = models.Scheduler.GetDockerd(unit.Number)
 
+	unit.Status = 1
+	_, err = o.Update(unit)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+
 	//创建一个DockerEngine，载入对应引擎。DockerEngine决定了启动container的行为。
 	var client dockerdengine.DockerClient
 	client = dockerd_engine1.NewDockerClientEng1(unit)
