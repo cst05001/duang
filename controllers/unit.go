@@ -3,9 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
-	"strconv"
-	"sync"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/orm"
@@ -17,6 +14,9 @@ import (
 	dockerd_engine1 "github.com/cst05001/duang/models/dockerdengine/engine1"
 	"github.com/cst05001/duang/models/sshclientengine"
 	sshclientengine1 "github.com/cst05001/duang/models/sshclientengine/engine1"
+	"regexp"
+	"strconv"
+	"sync"
 )
 
 type UnitController struct {
@@ -130,6 +130,7 @@ func (this *UnitController) List() {
 	}
 	for k, _ := range unitList {
 		o.LoadRelated(&unitList[k], "Parameteres")
+		o.LoadRelated(&unitList[k], "Dockerd")
 		//下面循环是为了避免beego ORM数据结构和json.Marshal配合导致的死循环解析问题
 		for _, p := range unitList[k].Parameteres {
 			p.Unit = nil
@@ -306,7 +307,7 @@ func (this *UnitController) Run() {
 		return
 	}
 	o.Commit()
-	
+
 	//创建一个DockerEngine，载入对应引擎。DockerEngine决定了启动container的行为。
 	var client dockerdengine.DockerClient
 	client = dockerd_engine1.NewDockerClientEng1(unit)
@@ -323,7 +324,7 @@ func (this *UnitController) Run() {
 	/*
 		由于启动docker将改成异步，所以要留一个查询Run状态的接口。
 	*/
-	
+
 	UnitRunLock.Unlock()
 }
 
