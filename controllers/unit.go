@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-
+	"sync"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/orm"
@@ -20,6 +20,7 @@ import (
 )
 
 type UnitController struct {
+	RunLock sync.Mutex
 	beego.Controller
 }
 
@@ -257,33 +258,55 @@ func (this *UnitController) Update() {
 
 //Reviewed at 20150702
 func (this *UnitController) Run() {
+	UnitRunLock.Lock()
 	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		UnitRunLock.Unlock()
 		return
 	}
 
 	o := orm.NewOrm()
 	o.Using("default")
+
 	unit := &core.Unit{Id: int64(unitId)}
 	err = o.Read(unit)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		UnitRunLock.Unlock()
 		return
 	}
-
+	if unit.Status != 0 {
+		WriteJson(this.Ctx, &StatusError{Error: "Just stopped status unit can be start."})
+		UnitRunLock.Unlock()
+		return
+	}
+	o.Begin()
 	o.LoadRelated(unit, "Parameteres")
 
 	//向调度器索要指定数量的dockerd，用来运行container。调度器决定了container跑在哪几台机器上。
 	unit.Dockerd = models.Scheduler.GetDockerd(unit.Number)
+	beego.Debug("GetDockerd:\n", unit.Dockerd)
 
 	unit.Status = 1
 	_, err = o.Update(unit)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		UnitRunLock.Unlock()
+		o.Rollback()
 		return
 	}
 
+	m2m := o.QueryM2M(unit, "dockerd")
+	_, err = m2m.Add(unit.Dockerd)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		UnitRunLock.Unlock()
+		o.Rollback()
+		return
+	}
+	o.Commit()
+	
 	//创建一个DockerEngine，载入对应引擎。DockerEngine决定了启动container的行为。
 	var client dockerdengine.DockerClient
 	client = dockerd_engine1.NewDockerClientEng1(unit)
@@ -294,16 +317,18 @@ func (this *UnitController) Run() {
 	err = client.Run(unit, dockerdCallbackFunc)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		UnitRunLock.Unlock()
 		return
 	}
 	/*
 		由于启动docker将改成异步，所以要留一个查询Run状态的接口。
 	*/
+	
+	UnitRunLock.Unlock()
 }
 
 //Reviewed at 20150702
 func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{}) {
-	ippool := core.NewIpPool()
 	var ip *core.Ip
 	var err error
 	switch status {
@@ -326,7 +351,7 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 			因为container采用独立IP桥接模式。
 			尚未做NAT网络支持。我也觉得独立桥接比NAT好。
 		*/
-		ip, err = ippool.GetFreeIP()
+		ip, err = models.IPPool.GetFreeIP()
 		if err != nil {
 			beego.Error("Cannot get free IP at ", dockerd.GetIP(), " :", err)
 			return
@@ -336,7 +361,7 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 		duangcfg, err := config.NewConfig("ini", "conf/duang.conf")
 		if err != nil {
 			beego.Error(err)
-			ippool.ReleaseIP(ip.Id)
+			models.IPPool.ReleaseIP(ip.Id)
 			return
 		}
 
@@ -344,14 +369,14 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 		//通过密钥对访问ssh服务器，也就是dockerd所在的服务器，也就是宿主机。
 		sshclient, err = sshclientengine1.NewSSLClient(fmt.Sprintf("%s:%s", dockerd.GetIP(), duangcfg.String("ssh_port")), duangcfg.String("ssh_user"), duangcfg.String("ssh_keypath"))
 		if err != nil {
-			ippool.ReleaseIP(ip.Id)
+			models.IPPool.ReleaseIP(ip.Id)
 			return
 		}
 		//pipework br0 containerName 192.168.0.0/24@192.168.0.1
 		cmd := fmt.Sprintf("%s %s %s %s", duangcfg.String("pipework_path"), duangcfg.String("pipework_bridge"), unit.Name, ip.Ip)
 		err = sshclient.Run(cmd)
 		if err != nil {
-			ippool.ReleaseIP(ip.Id)
+			models.IPPool.ReleaseIP(ip.Id)
 			return
 		}
 

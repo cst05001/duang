@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-
+	"sync"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 )
@@ -14,6 +14,7 @@ import (
 	此功能仅限用bridge独立IP方式运行container使用
 */
 type IpPool struct {
+	GetFreeIPLock	sync.Mutex
 }
 
 type Ip struct {
@@ -70,6 +71,7 @@ func (this *IpPool) ReleaseIP(id int64) error {
 
 //获取可用IP
 func (this *IpPool) GetFreeIP() (*Ip, error) {
+	this.GetFreeIPLock.Lock()
 	o := orm.NewOrm()
 	o.Using("default")
 	var err error
@@ -78,12 +80,14 @@ func (this *IpPool) GetFreeIP() (*Ip, error) {
 	err = o.QueryTable("Ip").Filter("status", 1).Limit(1).One(ip)
 	if err != nil {
 		beego.Error(err)
+		this.GetFreeIPLock.Unlock()
 		return nil, err
 	}
 
 	err = o.Begin()
 	if err != nil {
 		beego.Error(err)
+		this.GetFreeIPLock.Unlock()
 		return nil, err
 	}
 
@@ -94,14 +98,18 @@ func (this *IpPool) GetFreeIP() (*Ip, error) {
 		errRollback := o.Rollback()
 		if errRollback != nil {
 			beego.Error(errRollback)
+			this.GetFreeIPLock.Unlock()
 			return nil, errRollback
 		}
+		this.GetFreeIPLock.Unlock()
 		return nil, err
 	}
 	err = o.Commit()
 	if err != nil {
+		this.GetFreeIPLock.Unlock()
 		return nil, err
 	}
+	this.GetFreeIPLock.Unlock()
 	return ip, err
 }
 
