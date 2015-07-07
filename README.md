@@ -25,6 +25,11 @@ duang是一个以业务为单位的，分发器+docker集群的方案。前端�
 	ssh_prot = 22
 	ssh_keypath = ssh私钥
 
+	snmp_version = <2c|1>
+	snmp_community = COMMUNITY_NAME
+	snmp_timeout = 3
+	snmp_retry = 2
+
 ##架构图
 
 ![框架图](duang.png "框架图")
