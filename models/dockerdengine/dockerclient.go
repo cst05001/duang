@@ -14,4 +14,5 @@ const (
 type DockerClient interface {
 	//Unit, calllbackFunc(*core.Dockerd, int type status, ...args)
 	Run(*core.Unit, func(*core.Dockerd, int, ...interface{})) error
+	UpdateContainerStatus(*core.Unit) map[*core.Dockerd]uint8
 }

@@ -11,21 +11,31 @@ import (
 	"regexp"
 )
 
-func (this *DockerClientEng1) ListContainer() map[*core.Dockerd][]string {
-	result := make(map[*core.Dockerd][]string)
+func (this *DockerClientEng1) UpdateContainerStatus(unit *core.Unit) map[*core.Dockerd]uint8 {
+	reContainerName := regexp.MustCompile(fmt.Sprintf("^/%s$", unit.Name))
+	reUp := regexp.MustCompile("^Up")
+	result := make(map[*core.Dockerd]uint8)
 	listContainersOptions := docker.ListContainersOptions{
 		All: true,
 	}
-	for ptrDockerd, ptrClient := range this.ClientMap {
-		apiContainers, err := ptrClient.ListContainers(listContainersOptions)
+
+	for _, dockerd := range unit.Dockerd {
+		client := this.newClient(dockerd.Addr)
+
+		apiContainers, err := client.ListContainers(listContainersOptions)
 		if err != nil {
 			beego.Error(err)
 			return nil
 		}
-		result[ptrDockerd] = make([]string, 0)
+
+		result[dockerd] = 0
 		for _, i := range apiContainers {
-			result[ptrDockerd] = append(result[ptrDockerd], i.Names[0])
-			beego.Debug(ptrDockerd.GetIP(), "\t:\t", i.Names[0])
+			if reContainerName.MatchString(i.Names[0]) {
+				if reUp.MatchString(i.Status) {
+					result[dockerd] = 1
+					continue
+				}
+			}
 		}
 	}
 	return result
