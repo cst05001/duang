@@ -28,12 +28,14 @@ func (this *DockerClientEng1) UpdateContainerStatus(unit *core.Unit) map[*core.D
 			return nil
 		}
 
-		result[dockerd] = 0
+		result[dockerd] = dockerdengine.STATUS_CONTAINER_NOEXIST
 		for _, i := range apiContainers {
 			if reContainerName.MatchString(i.Names[0]) {
 				if reUp.MatchString(i.Status) {
-					result[dockerd] = 1
+					result[dockerd] = dockerdengine.STATUS_CONTAINER_UP
 					continue
+				} else {
+					result[dockerd] = dockerdengine.STATUS_CONTAINER_DOWN
 				}
 			}
 		}
