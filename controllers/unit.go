@@ -11,7 +11,6 @@ import (
 	"github.com/cst05001/duang/models/deliverengine"
 	deliver_engine1 "github.com/cst05001/duang/models/deliverengine/engine1"
 	"github.com/cst05001/duang/models/dockerdengine"
-	dockerd_engine1 "github.com/cst05001/duang/models/dockerdengine/engine1"
 	"github.com/cst05001/duang/models/sshclientengine"
 	sshclientengine1 "github.com/cst05001/duang/models/sshclientengine/engine1"
 	"regexp"
@@ -308,14 +307,11 @@ func (this *UnitController) Run() {
 	}
 	o.Commit()
 
-	//创建一个DockerEngine，载入对应引擎。DockerEngine决定了启动container的行为。
-	var client dockerdengine.DockerClient
-	client = dockerd_engine1.NewDockerClientEng1(unit)
 	/*
 		运行Unit，并附上回调函数，这是容器Create 和 Run成功、失败一共4个状态的回调函数。
 		详情请参考 models/dockerengine/dockerclient.go
 	*/
-	err = client.Run(unit, dockerdCallbackFunc)
+	err = models.DockerClient.Run(unit, dockerdCallbackFunc)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		UnitRunLock.Unlock()

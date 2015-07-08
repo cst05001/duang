@@ -11,6 +11,26 @@ import (
 	"regexp"
 )
 
+func (this *DockerClientEng1) ListContainer() map[*core.Dockerd][]string {
+	result := make(map[*core.Dockerd][]string)
+	listContainersOptions := docker.ListContainersOptions{
+		All: true,
+	}
+	for ptrDockerd, ptrClient := range this.ClientMap {
+		apiContainers, err := ptrClient.ListContainers(listContainersOptions)
+		if err != nil {
+			beego.Error(err)
+			return nil
+		}
+		result[ptrDockerd] = make([]string, 0)
+		for _, i := range apiContainers {
+			result[ptrDockerd] = append(result[ptrDockerd], i.Names[0])
+			beego.Debug(ptrDockerd.GetIP(), "\t:\t", i.Names[0])
+		}
+	}
+	return result
+}
+
 func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Dockerd, int, ...interface{})) error {
 
 	hostConfig := &docker.HostConfig{}
@@ -101,10 +121,10 @@ func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Docke
 		pullImageOptions.Tag = "latest"
 	}
 
-	for ptrDockerd, ptrClient := range this.ClientMap {
-		dockerd := &(*ptrDockerd)
-		client := &(*ptrClient)
-		go func() {
+	for _, dockerd := range unit.Dockerd {
+
+		go func(dockerd *core.Dockerd) {
+			client := this.newClient(dockerd.Addr)
 			//第二个参数支持registry身份认证，还没处理。
 			err := client.PullImage(pullImageOptions, docker.AuthConfiguration{})
 			if err != nil {
@@ -134,7 +154,7 @@ func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Docke
 			}
 			beego.Debug("StartContainer at ", dockerd.GetIP(), " successed")
 			callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_SUCCESSED, unit)
-		}()
+		}(dockerd)
 	}
 	return nil
 }
