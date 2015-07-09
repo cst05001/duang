@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego/context"
+	"github.com/cst05001/duang/models/core"
 )
 
 type StatusError struct {
@@ -18,4 +19,9 @@ func WriteJson(ctx *context.Context, i interface{}) error {
 	}
 	ctx.WriteString(string(data))
 	return nil
+}
+
+type ContainersStatus struct {
+	Dockerd *core.Dockerd
+	Status  uint8
 }

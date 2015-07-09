@@ -117,6 +117,49 @@ func (this *UnitController) Delete() {
 	}
 }
 
+func (this *UnitController) Status() {
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+
+	o := orm.NewOrm()
+	o.Using("default")
+	unit := &core.Unit{Id: int64(id)}
+	err = o.Read(unit)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+	WriteJson(this.Ctx, unit)
+}
+
+func (this *UnitController) Containers() {
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+
+	o := orm.NewOrm()
+	o.Using("default")
+	unit := &core.Unit{Id: int64(id)}
+	err = o.Read(unit)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+
+	o.LoadRelated(unit, "Dockerd")
+	containersStatus := models.DockerClient.UpdateContainerStatus(unit)
+	result := make([]*ContainersStatus, 0)
+	for dockerd, status := range containersStatus {
+		result = append(result, &ContainersStatus{Dockerd: dockerd, Status: status})
+	}
+	WriteJson(this.Ctx, result)
+}
+
 //Reviewed at 20150702
 func (this *UnitController) List() {
 	o := orm.NewOrm()
