@@ -330,7 +330,9 @@ func (this *UnitController) Stop() {
 		if err != nil {
 			beego.Error("Stop container ", unit.Name, " at ", dockerd.GetIP(), " with error: ", err)
 		} else {
-			beego.Error("Stop container ", unit.Name, " at ", dockerd.GetIP(), "successed.")
+			ip := models.IPPool.GetIPByContainerID(args[0].(string))
+			models.IPPool.ReleaseIP(ip.Id)
+			beego.Debug("Stop container ", unit.Name, " at ", dockerd.GetIP(), "successed.")
 		}
 	})
 	if err != nil {
@@ -457,14 +459,24 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 
 		var sshclient sshclientengine.SshClientInterface
 		//通过密钥对访问ssh服务器，也就是dockerd所在的服务器，也就是宿主机。
-		sshclient, err = sshclientengine1.NewSSLClient(fmt.Sprintf("%s:%s", dockerd.GetIP(), duangcfg.String("ssh_port")), duangcfg.String("ssh_user"), duangcfg.String("ssh_keypath"))
+		sshclient, err = sshclientengine1.NewSSLClient(fmt.Sprintf("%s:%s", dockerd.GetIP(),
+			duangcfg.String("ssh_port")), duangcfg.String("ssh_user"), duangcfg.String("ssh_keypath"))
 		if err != nil {
 			models.IPPool.ReleaseIP(ip.Id)
 			return
 		}
 		//pipework br0 containerName 192.168.0.0/24@192.168.0.1
-		cmd := fmt.Sprintf("%s %s %s %s", duangcfg.String("pipework_path"), duangcfg.String("pipework_bridge"), unit.Name, ip.Ip)
+		cmd := fmt.Sprintf("%s %s %s %s", duangcfg.String("pipework_path"), duangcfg.String("pipework_bridge"),
+			unit.Name, ip.Ip)
 		err = sshclient.Run(cmd)
+		if err != nil {
+			models.IPPool.ReleaseIP(ip.Id)
+			return
+		}
+		ip.ContainerId = args[1].(string)
+		o := orm.NewOrm()
+		o.Using("default")
+		_, err = o.Update(ip)
 		if err != nil {
 			models.IPPool.ReleaseIP(ip.Id)
 			return

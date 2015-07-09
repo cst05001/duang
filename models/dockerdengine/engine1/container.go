@@ -166,7 +166,7 @@ func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Docke
 				return
 			}
 			beego.Debug("StartContainer at ", dockerd.GetIP(), " successed")
-			callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_SUCCESSED, unit)
+			callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_SUCCESSED, unit, container.ID)
 		}(dockerd)
 	}
 	return nil
@@ -179,7 +179,7 @@ func (this *DockerClientEng1) Stop(unit *core.Unit, callbackFunc func(*core.Dock
 		All: true,
 	}
 
-	successCnt := 0
+	failedCnt := 0
 	for _, dockerd := range unit.Dockerd {
 		client := this.newClient(dockerd.Addr)
 
@@ -205,20 +205,30 @@ func (this *DockerClientEng1) Stop(unit *core.Unit, callbackFunc func(*core.Dock
 				if err != nil {
 					beego.Error(err)
 					if callbackFunc != nil {
-						callbackFunc(dockerd, err, nil)
+						callbackFunc(dockerd, err, i.ID)
 					}
 				} else {
 					if callbackFunc != nil {
-						successCnt = successCnt + 1
-						callbackFunc(dockerd, nil, nil)
+						callbackFunc(dockerd, nil, i.ID)
 					}
 				}
 			}
 		}
+
+		apiContainers, err = client.ListContainers(listContainersOptions)
+		if err != nil {
+			beego.Error(err)
+			return err
+		}
+
+		for _, i := range apiContainers {
+			if reContainerName.MatchString(i.Names[0]) {
+				failedCnt = failedCnt + 1
+			}
+		}
 	}
-	if successCnt >= len(unit.Dockerd) {
-		return nil
-	} else {
-		return errors.New("Stop container at some dockerd failed.")
+	if failedCnt > 0 {
+		return errors.New("Some containers cannot be stop.")
 	}
+	return nil
 }

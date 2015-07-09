@@ -3,10 +3,10 @@ package core
 import (
 	"errors"
 	"fmt"
-	"regexp"
-	"sync"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"regexp"
+	"sync"
 )
 
 //review at 20150702
@@ -14,19 +14,35 @@ import (
 	此功能仅限用bridge独立IP方式运行container使用
 */
 type IpPool struct {
-	GetFreeIPLock	sync.Mutex
+	GetFreeIPLock sync.Mutex
 }
 
 type Ip struct {
-	Id     int64
-	Ip     string `orm:"unique"`
-	Status uint8  `orm:"default(1)"`
+	Id          int64
+	Ip          string `orm:"unique"`
+	Status      uint8  `orm:"default(1)"`
+	ContainerId string `orm:"unique;index"`
 }
 
 func (this *Ip) GetIP() string {
 	re := regexp.MustCompile("^(\\d+\\.\\d+\\.\\d+\\.\\d+)/(\\d+)@(\\d+\\.\\d+\\.\\d+\\.\\d+)$")
 	result := re.FindStringSubmatch(this.Ip)
 	return result[1]
+}
+
+func (this *IpPool) GetIPByContainerID(containerId string) *Ip {
+	beego.Debug("GetIPByContainerID: ", containerId)
+	o := orm.NewOrm()
+	o.Using("default")
+	var err error
+
+	ip := &Ip{}
+	err = o.QueryTable("Ip").Filter("ContainerId", containerId).Limit(1).One(ip)
+	if err != nil {
+		beego.Error(err)
+		return nil
+	}
+	return ip
 }
 
 func (this *Ip) GetPrefix() string {
@@ -61,6 +77,7 @@ func (this *IpPool) ReleaseIP(id int64) error {
 		return errors.New("not used IP")
 	}
 
+	ip.ContainerId = ""
 	ip.Status = 1
 	_, err = o.Update(ip)
 	if err != nil {
@@ -233,7 +250,7 @@ func (this *IpPool) AddIP(ip *Ip) (*Ip, error) {
 func (this *IpPool) DelIP(id int64) error {
 	o := orm.NewOrm()
 	o.Using("default")
-	
+
 	ip := &Ip{Id: id}
 	_, err := o.Delete(ip)
 	if err != nil {
