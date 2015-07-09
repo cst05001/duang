@@ -96,6 +96,8 @@ POST UnitStruct
 
 * /unit/ID/run
 
+* /unit/ID/stop
+
 * /unit/ID/containers
 
 * /unit/ID/status
