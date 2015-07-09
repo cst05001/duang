@@ -71,6 +71,17 @@ duang是一个以业务为单位的，分发器+docker集群的方案。前端�
 	}
 
 
+####ContainersStatus
+
+	{
+		Dockerd:	
+			{
+				Id":	1,
+				Addr:	"http://192.168.3.147:2375",
+			},
+		Status:		1
+	}
+
 ###Interface
 
 * /unit/create
@@ -84,6 +95,10 @@ POST UnitStruct
 * /unit/ID/delete
 
 * /unit/ID/run
+
+* /unit/ID/containers
+
+* /unit/ID/status
 
 * /dockerd/ID/update
 
