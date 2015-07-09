@@ -2,6 +2,7 @@ package engine1
 
 //review at 20150703
 import (
+	"errors"
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/cst05001/duang/models/core"
@@ -169,4 +170,55 @@ func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Docke
 		}(dockerd)
 	}
 	return nil
+}
+
+func (this *DockerClientEng1) Stop(unit *core.Unit, callbackFunc func(*core.Dockerd, error, ...interface{})) error {
+	reContainerName := regexp.MustCompile(fmt.Sprintf("^/%s$", unit.Name))
+	//reUp := regexp.MustCompile("^Up")
+	listContainersOptions := docker.ListContainersOptions{
+		All: true,
+	}
+
+	successCnt := 0
+	for _, dockerd := range unit.Dockerd {
+		client := this.newClient(dockerd.Addr)
+
+		apiContainers, err := client.ListContainers(listContainersOptions)
+		if err != nil {
+			beego.Error(err)
+			return err
+		}
+
+		for _, i := range apiContainers {
+			if reContainerName.MatchString(i.Names[0]) {
+				/*
+					if reUp.MatchString(i.Status) {
+						client.StopContainer(i.ID, 10)
+					}
+				*/
+				removeContainerOptions := docker.RemoveContainerOptions{
+					ID:            i.ID,
+					RemoveVolumes: true,
+					Force:         true,
+				}
+				err = client.RemoveContainer(removeContainerOptions)
+				if err != nil {
+					beego.Error(err)
+					if callbackFunc != nil {
+						callbackFunc(dockerd, err, nil)
+					}
+				} else {
+					if callbackFunc != nil {
+						successCnt = successCnt + 1
+						callbackFunc(dockerd, nil, nil)
+					}
+				}
+			}
+		}
+	}
+	if successCnt >= len(unit.Dockerd) {
+		return nil
+	} else {
+		return errors.New("Stop container at some dockerd failed.")
+	}
 }

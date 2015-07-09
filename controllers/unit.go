@@ -299,10 +299,9 @@ func (this *UnitController) Update() {
 	WriteJson(this.Ctx, unit)
 }
 
-//Reviewed at 20150702
-func (this *UnitController) Run() {
+func (this *UnitController) Stop() {
 	UnitRunLock.Lock()
-	unitId, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		UnitRunLock.Unlock()
@@ -312,7 +311,51 @@ func (this *UnitController) Run() {
 	o := orm.NewOrm()
 	o.Using("default")
 
-	unit := &core.Unit{Id: int64(unitId)}
+	unit := &core.Unit{Id: int64(id)}
+	err = o.Read(unit)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		UnitRunLock.Unlock()
+		return
+	}
+	if unit.Status == 0 {
+		WriteJson(this.Ctx, &StatusError{Error: "Just non-stopped status unit can be stop."})
+		UnitRunLock.Unlock()
+		return
+	}
+	o.LoadRelated(unit, "Parameteres")
+
+	err = models.DockerClient.Stop(unit, nil)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		UnitRunLock.Unlock()
+		return
+	}
+
+	unit.Status = 0
+	_, err = o.Update(unit, "Status")
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		UnitRunLock.Unlock()
+		return
+	}
+	UnitRunLock.Unlock()
+}
+
+//Reviewed at 20150702
+func (this *UnitController) Run() {
+	UnitRunLock.Lock()
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		UnitRunLock.Unlock()
+		return
+	}
+
+	o := orm.NewOrm()
+	o.Using("default")
+
+	unit := &core.Unit{Id: int64(id)}
 	err = o.Read(unit)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
