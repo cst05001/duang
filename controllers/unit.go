@@ -324,8 +324,15 @@ func (this *UnitController) Stop() {
 		return
 	}
 	o.LoadRelated(unit, "Parameteres")
+	o.LoadRelated(unit, "Dockerd")
 
-	err = models.DockerClient.Stop(unit, nil)
+	err = models.DockerClient.Stop(unit, func(dockerd *core.Dockerd, err error, args ...interface{}) {
+		if err != nil {
+			beego.Error("Stop container ", unit.Name, " at ", dockerd.GetIP(), " with error: ", err)
+		} else {
+			beego.Error("Stop container ", unit.Name, " at ", dockerd.GetIP(), "successed.")
+		}
+	})
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		UnitRunLock.Unlock()
