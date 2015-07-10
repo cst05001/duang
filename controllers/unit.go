@@ -151,7 +151,11 @@ func (this *UnitController) Containers() {
 		return
 	}
 
-	o.LoadRelated(unit, "Dockerd")
+	o.LoadRelated(unit, "Container")
+	for _, c := range unit.Container {
+		o.LoadRelated(c, "Dockerd")
+		o.LoadRelated(c, "Ip")
+	}
 	containersStatus := models.DockerClient.UpdateContainerStatus(unit)
 	result := make([]*ContainersStatus, 0)
 	for dockerd, status := range containersStatus {
@@ -172,7 +176,7 @@ func (this *UnitController) List() {
 	}
 	for k, _ := range unitList {
 		o.LoadRelated(&unitList[k], "Parameteres")
-		o.LoadRelated(&unitList[k], "Dockerd")
+		//o.LoadRelated(&unitList[k], "Dockerd")
 		//下面循环是为了避免beego ORM数据结构和json.Marshal配合导致的死循环解析问题
 		for _, p := range unitList[k].Parameteres {
 			p.Unit = nil
@@ -324,14 +328,24 @@ func (this *UnitController) Stop() {
 		return
 	}
 	o.LoadRelated(unit, "Parameteres")
-	o.LoadRelated(unit, "Dockerd")
+	o.LoadRelated(unit, "Container")
+	for _, c := range unit.Container {
+		o.LoadRelated(c, "Dockerd")
+		o.LoadRelated(c, "Ip")
+	}
 
 	err = models.DockerClient.Stop(unit, func(dockerd *core.Dockerd, err error, args ...interface{}) {
 		if err != nil {
 			beego.Error("Stop container ", unit.Name, " at ", dockerd.GetIP(), " with error: ", err)
 		} else {
-			ip := models.IPPool.GetIPByContainerID(args[0].(string))
+			container := args[0].(*core.Container)
+			ip := container.Ip
 			models.IPPool.ReleaseIP(ip.Id)
+			_, err = o.Delete(container)
+			if err != nil {
+				beego.Error("Stop container ", unit.Name, " at ", dockerd.GetIP(), " with error: ", err)
+				return
+			}
 			beego.Debug("Stop container ", unit.Name, " at ", dockerd.GetIP(), "successed.")
 		}
 	})
@@ -380,8 +394,12 @@ func (this *UnitController) Run() {
 	o.LoadRelated(unit, "Parameteres")
 
 	//向调度器索要指定数量的dockerd，用来运行container。调度器决定了container跑在哪几台机器上。
-	unit.Dockerd = models.Scheduler.GetDockerd(unit.Number)
-	beego.Debug("GetDockerd:\n", unit.Dockerd)
+	dockerdList := models.Scheduler.GetDockerd(unit.Number)
+	unit.Container = make([]*core.Container, 0)
+	for _, dockerd := range dockerdList {
+		unit.Container = append(unit.Container, &core.Container{Dockerd: dockerd})
+	}
+	//beego.Debug("GetDockerd:\n", unit.Dockerd)
 
 	unit.Status = 1
 	_, err = o.Update(unit)
@@ -392,14 +410,16 @@ func (this *UnitController) Run() {
 		return
 	}
 
-	m2m := o.QueryM2M(unit, "dockerd")
-	_, err = m2m.Add(unit.Dockerd)
-	if err != nil {
-		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		UnitRunLock.Unlock()
-		o.Rollback()
-		return
-	}
+	/*
+		m2m := o.QueryM2M(unit, "dockerd")
+		_, err = m2m.Add(unit.Dockerd)
+		if err != nil {
+			WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+			UnitRunLock.Unlock()
+			o.Rollback()
+			return
+		}
+	*/
 	o.Commit()
 
 	/*
@@ -473,12 +493,24 @@ func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{})
 			models.IPPool.ReleaseIP(ip.Id)
 			return
 		}
-		ip.ContainerId = args[1].(string)
+		//ip.ContainerId = args[1].(string)
 		o := orm.NewOrm()
 		o.Using("default")
 		_, err = o.Update(ip)
 		if err != nil {
 			models.IPPool.ReleaseIP(ip.Id)
+			return
+		}
+
+		container := &core.Container{
+			Dockerd:     dockerd,
+			Ip:          ip,
+			Unit:        unit,
+			ContainerId: args[1].(string),
+		}
+		container.Id, err = o.Insert(container)
+		if err != nil {
+			beego.Error(err)
 			return
 		}
 

@@ -23,5 +23,6 @@ func WriteJson(ctx *context.Context, i interface{}) error {
 
 type ContainersStatus struct {
 	Dockerd *core.Dockerd
+	Ip      *core.Ip
 	Status  uint8
 }

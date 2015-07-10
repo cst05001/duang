@@ -8,7 +8,8 @@ type Unit struct {
 	Domain      string
 	Status      uint8            `orm:default(0)`
 	Parameteres []*UnitParameter `orm:"reverse(many)"	json:"-"`
-	Dockerd     []*Dockerd       `orm:"rel(m2m)"	json:"-"`
+	//Dockerd     []*Dockerd       `orm:"rel(m2m)"	json:"-"`
+	Container []*Container `orm:"reverse(many)"	json:"-"`
 }
 
 type UnitParameter struct {

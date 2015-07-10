@@ -20,7 +20,8 @@ func (this *DockerClientEng1) UpdateContainerStatus(unit *core.Unit) map[*core.D
 		All: true,
 	}
 
-	for _, dockerd := range unit.Dockerd {
+	for _, container := range unit.Container {
+		dockerd := container.Dockerd
 		client := this.newClient(dockerd.Addr)
 
 		apiContainers, err := client.ListContainers(listContainersOptions)
@@ -134,9 +135,10 @@ func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Docke
 		pullImageOptions.Tag = "latest"
 	}
 
-	for _, dockerd := range unit.Dockerd {
-
+	for _, container := range unit.Container {
+		dockerd := container.Dockerd
 		go func(dockerd *core.Dockerd) {
+
 			client := this.newClient(dockerd.Addr)
 			//第二个参数支持registry身份认证，还没处理。
 			err := client.PullImage(pullImageOptions, docker.AuthConfiguration{})
@@ -180,7 +182,8 @@ func (this *DockerClientEng1) Stop(unit *core.Unit, callbackFunc func(*core.Dock
 	}
 
 	failedCnt := 0
-	for _, dockerd := range unit.Dockerd {
+	for _, container := range unit.Container {
+		dockerd := container.Dockerd
 		client := this.newClient(dockerd.Addr)
 
 		apiContainers, err := client.ListContainers(listContainersOptions)
@@ -205,11 +208,11 @@ func (this *DockerClientEng1) Stop(unit *core.Unit, callbackFunc func(*core.Dock
 				if err != nil {
 					beego.Error(err)
 					if callbackFunc != nil {
-						callbackFunc(dockerd, err, i.ID)
+						callbackFunc(dockerd, err, container)
 					}
 				} else {
 					if callbackFunc != nil {
-						callbackFunc(dockerd, nil, i.ID)
+						callbackFunc(dockerd, nil, container)
 					}
 				}
 			}

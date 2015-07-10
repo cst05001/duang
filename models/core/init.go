@@ -24,6 +24,7 @@ func init() {
 		new(UnitParameter),
 		new(Dockerd),
 		new(Ip),
+		new(Container),
 		//new(Frontend),
 		//new(Backend),
 	)

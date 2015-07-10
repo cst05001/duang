@@ -18,10 +18,11 @@ type IpPool struct {
 }
 
 type Ip struct {
-	Id          int64
-	Ip          string `orm:"unique"`
-	Status      uint8  `orm:"default(1)"`
-	ContainerId string `orm:"unique;index"`
+	Id     int64
+	Ip     string `orm:"unique"`
+	Status uint8  `orm:"default(1)"`
+	//ContainerId string     `orm:"unique;index"`
+	Container *Container `orm:"reverse(one)"	json:"-"`
 }
 
 func (this *Ip) GetIP() string {
@@ -77,7 +78,7 @@ func (this *IpPool) ReleaseIP(id int64) error {
 		return errors.New("not used IP")
 	}
 
-	ip.ContainerId = ""
+	//ip.ContainerId = ""
 	ip.Status = 1
 	_, err = o.Update(ip)
 	if err != nil {

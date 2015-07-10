@@ -8,8 +8,9 @@ import (
 
 type Dockerd struct {
 	Id   int64
-	Addr string  `orm:"unique"`
-	Unit []*Unit `orm:"reverse(many)"`
+	Addr string `orm:"unique"`
+	//Unit      []*Unit    `orm:"reverse(many)"`
+	Container *Container `orm:"reverse(one)"	json:"-"`
 }
 
 func (this *Dockerd) GetIP() string {
