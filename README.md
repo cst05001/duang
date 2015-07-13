@@ -86,35 +86,63 @@ duang是一个以业务为单位的，分发器+docker集群的方案。前端�
 
 * /unit/create
 
-POST UnitStruct
+	创建业务
+	
+	POST UnitStruct
 
 * /unit/ID/update
 
-POST UnitStruct
+	更新业务
+	
+	POST UnitStruct
 
 * /unit/ID/delete
 
-* /unit/ID/run
+	删除业务
+
+* /unit/ID/start
+
+	启动业务
 
 * /unit/ID/stop
 
+	停止业务
+
 * /unit/ID/containers
+
+	查看这个业务运行中的实例（容器）
 
 * /unit/ID/status
 
+	查看业务状态（运行、停止）
+
+* /dockerd/create
+
+	添加dockerd
+
 * /dockerd/ID/update
 
-POST UnitStruct
+	更新dockerd配置
+
+	POST UnitStruct
 
 * /dockerd/ID/delete
 
+	删除dockerd
+
 * /ippool/ID/release
+
+	释放分配出去的IP
 
 * /ippool/ID/delete
 
+	删除IP
+
 * /ippool/create
 
-POST IppoolStruct
+	添加IP
+
+	POST IppoolStruct
 
 ##和confd配合的etcd目录结构
 

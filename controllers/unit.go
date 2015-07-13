@@ -3,6 +3,10 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strconv"
+	"sync"
+
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/orm"
@@ -13,9 +17,6 @@ import (
 	"github.com/cst05001/duang/models/dockerdengine"
 	"github.com/cst05001/duang/models/sshclientengine"
 	sshclientengine1 "github.com/cst05001/duang/models/sshclientengine/engine1"
-	"regexp"
-	"strconv"
-	"sync"
 )
 
 type UnitController struct {
@@ -305,10 +306,10 @@ func (this *UnitController) Update() {
 
 func (this *UnitController) Stop() {
 	UnitRunLock.Lock()
+	defer UnitRunLock.Unlock()
 	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		UnitRunLock.Unlock()
 		return
 	}
 
@@ -319,12 +320,10 @@ func (this *UnitController) Stop() {
 	err = o.Read(unit)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		UnitRunLock.Unlock()
 		return
 	}
 	if unit.Status == 0 {
 		WriteJson(this.Ctx, &StatusError{Error: "Just non-stopped status unit can be stop."})
-		UnitRunLock.Unlock()
 		return
 	}
 	o.LoadRelated(unit, "Parameteres")
@@ -351,7 +350,6 @@ func (this *UnitController) Stop() {
 	})
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		UnitRunLock.Unlock()
 		return
 	}
 
@@ -359,19 +357,22 @@ func (this *UnitController) Stop() {
 	_, err = o.Update(unit, "Status")
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		UnitRunLock.Unlock()
 		return
 	}
-	UnitRunLock.Unlock()
 }
 
-//Reviewed at 20150702
-func (this *UnitController) Start() {
+func (this *UnitController) Extend() {
 	UnitRunLock.Lock()
+	defer UnitRunLock.Unlock()
+
 	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		UnitRunLock.Unlock()
+		return
+	}
+	num, err := strconv.Atoi(this.Ctx.Input.Param(":num"))
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 
@@ -382,12 +383,43 @@ func (this *UnitController) Start() {
 	err = o.Read(unit)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		UnitRunLock.Unlock()
+		return
+	}
+	if unit.Status != 1 {
+		WriteJson(this.Ctx, &StatusError{Error: "Just running status unit can be extended."})
+		return
+	}
+	o.LoadRelated(unit, "Container")
+	excludeBackends := make([]string, 0)
+	for _, c := range unit.Container {
+		excludeBackends = append(excludeBackends, c.Dockerd.Addr)
+	}
+
+	models.Scheduler.GetDockerd(int64(num), excludeBackends)
+
+}
+
+//Reviewed at 20150702
+func (this *UnitController) Start() {
+	UnitRunLock.Lock()
+	defer UnitRunLock.Unlock()
+	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
+
+	o := orm.NewOrm()
+	o.Using("default")
+
+	unit := &core.Unit{Id: int64(id)}
+	err = o.Read(unit)
+	if err != nil {
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 	if unit.Status != 0 {
 		WriteJson(this.Ctx, &StatusError{Error: "Just stopped status unit can be start."})
-		UnitRunLock.Unlock()
 		return
 	}
 	o.Begin()
@@ -405,7 +437,6 @@ func (this *UnitController) Start() {
 	_, err = o.Update(unit)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		UnitRunLock.Unlock()
 		o.Rollback()
 		return
 	}
@@ -429,14 +460,11 @@ func (this *UnitController) Start() {
 	err = models.DockerClient.Run(unit, dockerdCallbackFunc)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
-		UnitRunLock.Unlock()
 		return
 	}
 	/*
 		由于启动docker将改成异步，所以要留一个查询Run状态的接口。
 	*/
-
-	UnitRunLock.Unlock()
 }
 
 //Reviewed at 20150702
