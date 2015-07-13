@@ -4,18 +4,19 @@ package engine1
 import (
 	"errors"
 	"fmt"
+	"regexp"
+
 	"github.com/astaxie/beego"
 	"github.com/cst05001/duang/models/core"
 	"github.com/cst05001/duang/models/dockerdengine"
 	"github.com/docker/docker/api/types"
 	docker "github.com/fsouza/go-dockerclient"
-	"regexp"
 )
 
-func (this *DockerClientEng1) UpdateContainerStatus(unit *core.Unit) map[*core.Dockerd]uint8 {
+func (this *DockerClientEng1) UpdateContainerStatus(unit *core.Unit) map[*core.Container]uint8 {
 	reContainerName := regexp.MustCompile(fmt.Sprintf("^/%s$", unit.Name))
 	reUp := regexp.MustCompile("^Up")
-	result := make(map[*core.Dockerd]uint8)
+	result := make(map[*core.Container]uint8)
 	listContainersOptions := docker.ListContainersOptions{
 		All: true,
 	}
@@ -30,17 +31,20 @@ func (this *DockerClientEng1) UpdateContainerStatus(unit *core.Unit) map[*core.D
 			return nil
 		}
 
-		result[dockerd] = dockerdengine.STATUS_CONTAINER_NOEXIST
+		result[container] = dockerdengine.STATUS_CONTAINER_NOEXIST
 		for _, i := range apiContainers {
 			if reContainerName.MatchString(i.Names[0]) {
 				if reUp.MatchString(i.Status) {
-					result[dockerd] = dockerdengine.STATUS_CONTAINER_UP
+					result[container] = dockerdengine.STATUS_CONTAINER_UP
 					continue
 				} else {
-					result[dockerd] = dockerdengine.STATUS_CONTAINER_DOWN
+					result[container] = dockerdengine.STATUS_CONTAINER_DOWN
 				}
 			}
 		}
+	}
+	for c, _ := range result {
+		beego.Debug("UpdateContainerStatus: ", c.Dockerd.Addr, "\t", result[c])
 	}
 	return result
 }
@@ -135,41 +139,56 @@ func (this *DockerClientEng1) Run(unit *core.Unit, callbackFunc func(*core.Docke
 		pullImageOptions.Tag = "latest"
 	}
 
+	containerStatus := this.UpdateContainerStatus(unit)
 	for _, container := range unit.Container {
-		dockerd := container.Dockerd
-		go func(dockerd *core.Dockerd) {
+		do := true
+		beego.Debug("engine1.Run checking container dockerd status: ", container.Dockerd.Addr)
 
-			client := this.newClient(dockerd.Addr)
-			//第二个参数支持registry身份认证，还没处理。
-			err := client.PullImage(pullImageOptions, docker.AuthConfiguration{})
-			if err != nil {
-				beego.Error("Pull image ", pullImageOptions.Registry, pullImageOptions.Repository,
-					pullImageOptions.Tag, " at ", dockerd.GetIP(), " failed: ", err)
-				return
-			}
-			beego.Debug("Pull image ", pullImageOptions.Registry,
-				pullImageOptions.Repository, pullImageOptions.Tag, " at ", dockerd.GetIP(), " successed.")
+		if containerStatus[container] == dockerdengine.STATUS_CONTAINER_UP {
+			do = false
+		}
 
-			container, err := client.CreateContainer(*createContainerOptions)
-			if err != nil {
-				beego.Error("Create container at ", dockerd.GetIP(), " failed: ", err)
-				containerCreateResponse.Warnings = append(containerCreateResponse.Warnings, err.Error())
-				callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_FAILED, unit)
-				return
-			}
-			containerCreateResponse.ID = container.ID
-			callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_SUCCESSED, unit)
+		if do {
+			beego.Debug("engine1.Run checking container dockerd status: on")
+		} else {
+			beego.Debug("engine1.Run checking container dockerd status: else")
+		}
 
-			// start container
-			err = client.StartContainer(containerCreateResponse.ID, hostConfig)
-			if err != nil {
-				beego.Error("Start container at ", dockerd.GetIP(), " failed: ", err)
-				callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_FAILED, unit)
-				return
-			}
-			beego.Debug("StartContainer at ", dockerd.GetIP(), " successed")
-			callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_SUCCESSED, unit, container.ID)
-		}(dockerd)
+		if do {
+			go func(dockerd *core.Dockerd) {
+
+				client := this.newClient(dockerd.Addr)
+				//第二个参数支持registry身份认证，还没处理。
+				err := client.PullImage(pullImageOptions, docker.AuthConfiguration{})
+				if err != nil {
+					beego.Error("Pull image ", pullImageOptions.Registry, pullImageOptions.Repository,
+						pullImageOptions.Tag, " at ", dockerd.GetIP(), " failed: ", err)
+					return
+				}
+				beego.Debug("Pull image ", pullImageOptions.Registry,
+					pullImageOptions.Repository, pullImageOptions.Tag, " at ", dockerd.GetIP(), " successed.")
+
+				container, err := client.CreateContainer(*createContainerOptions)
+				if err != nil {
+					beego.Error("Create container at ", dockerd.GetIP(), " failed: ", err)
+					containerCreateResponse.Warnings = append(containerCreateResponse.Warnings, err.Error())
+					callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_FAILED, unit)
+					return
+				}
+				containerCreateResponse.ID = container.ID
+				callbackFunc(dockerd, dockerdengine.STATUS_ON_CREATE_SUCCESSED, unit)
+
+				// start container
+				err = client.StartContainer(containerCreateResponse.ID, hostConfig)
+				if err != nil {
+					beego.Error("Start container at ", dockerd.GetIP(), " failed: ", err)
+					callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_FAILED, unit)
+					return
+				}
+				beego.Debug("StartContainer at ", dockerd.GetIP(), " successed")
+				callbackFunc(dockerd, dockerdengine.STATUS_ON_RUN_SUCCESSED, unit, container.ID)
+			}(container.Dockerd)
+		}
 	}
 	return nil
 }

@@ -21,5 +21,5 @@ type DockerClient interface {
 	//Unit, calllbackFunc(*core.Dockerd, int type status, ...args)
 	Run(*core.Unit, func(*core.Dockerd, int, ...interface{})) error
 	Stop(*core.Unit, func(*core.Dockerd, error, ...interface{})) error
-	UpdateContainerStatus(*core.Unit) map[*core.Dockerd]uint8
+	UpdateContainerStatus(*core.Unit) map[*core.Container]uint8
 }

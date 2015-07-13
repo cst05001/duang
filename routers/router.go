@@ -22,6 +22,7 @@ func init() {
 	beego.Router("/unit/:id:int/containers", &controllers.UnitController{}, "get:Containers")
 	beego.Router("/unit/:id:int/status", &controllers.UnitController{}, "get:Status")
 	beego.Router("/unit/:id:int/stop", &controllers.UnitController{}, "get:Stop")
+	beego.Router("/unit/:id:int/extend/:num:int", &controllers.UnitController{}, "get:Extend")
 
 	beego.Router("/dockerd/list", &controllers.DockerdController{}, "get:List")
 	beego.Router("/dockerd/create", &controllers.DockerdController{}, "get:CreateHtml")

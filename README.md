@@ -104,6 +104,10 @@ duang是一个以业务为单位的，分发器+docker集群的方案。前端�
 
 	启动业务
 
+* /unit/ID/extend/NUM
+
+	扩容业务，NUM表示扩容副本数
+
 * /unit/ID/stop
 
 	停止业务

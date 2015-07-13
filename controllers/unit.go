@@ -159,8 +159,8 @@ func (this *UnitController) Containers() {
 	}
 	containersStatus := models.DockerClient.UpdateContainerStatus(unit)
 	result := make([]*ContainersStatus, 0)
-	for dockerd, status := range containersStatus {
-		result = append(result, &ContainersStatus{Dockerd: dockerd, Status: status})
+	for container, status := range containersStatus {
+		result = append(result, &ContainersStatus{Dockerd: container.Dockerd, Status: status})
 	}
 	WriteJson(this.Ctx, result)
 }
@@ -367,11 +367,13 @@ func (this *UnitController) Extend() {
 
 	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
 	if err != nil {
+		beego.Error(err)
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
 	num, err := strconv.Atoi(this.Ctx.Input.Param(":num"))
 	if err != nil {
+		beego.Error(err)
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
@@ -382,6 +384,7 @@ func (this *UnitController) Extend() {
 	unit := &core.Unit{Id: int64(id)}
 	err = o.Read(unit)
 	if err != nil {
+		beego.Error(err)
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
@@ -390,13 +393,41 @@ func (this *UnitController) Extend() {
 		return
 	}
 	o.LoadRelated(unit, "Container")
+	o.LoadRelated(unit, "Parameteres")
+
+	for _, c := range unit.Container {
+		o.LoadRelated(c, "Dockerd")
+	}
 	excludeBackends := make([]string, 0)
 	for _, c := range unit.Container {
 		excludeBackends = append(excludeBackends, c.Dockerd.Addr)
 	}
 
-	models.Scheduler.GetDockerd(int64(num), excludeBackends)
+	dockerdList := models.Scheduler.GetDockerd(int64(num), excludeBackends)
 
+	for _, dockerd := range dockerdList {
+		c := &core.Container{Dockerd: dockerd, Unit: unit}
+		unit.Container = append(unit.Container, c)
+
+		/*
+			c.Id, err = o.Insert(c)
+			if err != nil {
+				beego.Error(err)
+				WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+				return
+			}
+		*/
+	}
+
+	for _, c := range unit.Container {
+		beego.Debug("container.Dockerd.Addr: ", c.Dockerd.Addr)
+	}
+	err = models.DockerClient.Run(unit, dockerdCallbackFuncStart)
+	if err != nil {
+		beego.Error(err)
+		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
+		return
+	}
 }
 
 //Reviewed at 20150702
@@ -457,7 +488,7 @@ func (this *UnitController) Start() {
 		运行Unit，并附上回调函数，这是容器Create 和 Run成功、失败一共4个状态的回调函数。
 		详情请参考 models/dockerengine/dockerclient.go
 	*/
-	err = models.DockerClient.Run(unit, dockerdCallbackFunc)
+	err = models.DockerClient.Run(unit, dockerdCallbackFuncStart)
 	if err != nil {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
@@ -468,7 +499,7 @@ func (this *UnitController) Start() {
 }
 
 //Reviewed at 20150702
-func dockerdCallbackFunc(dockerd *core.Dockerd, status int, args ...interface{}) {
+func dockerdCallbackFuncStart(dockerd *core.Dockerd, status int, args ...interface{}) {
 	var ip *core.Ip
 	var err error
 	switch status {

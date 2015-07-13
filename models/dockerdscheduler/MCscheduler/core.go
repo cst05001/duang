@@ -184,10 +184,10 @@ func (this *MCscheduler) GetDockerd(n int64, excludeBackends []string) []*core.D
 	for k, _ := range this.DockerdForSortList {
 		// 如果在 exclude 列表，则跳过。
 		if excludeBackends != nil {
-			dockerd := dockerdList[k]
+			dockerd := this.DockerdForSortList[k]
 			in := false
 			for _, exclude := range excludeBackends {
-				if dockerd.Addr == exclude {
+				if dockerd.Dockerd.Addr == exclude {
 					in = true
 					break
 				}
