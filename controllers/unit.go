@@ -366,7 +366,7 @@ func (this *UnitController) Stop() {
 }
 
 //Reviewed at 20150702
-func (this *UnitController) Run() {
+func (this *UnitController) Start() {
 	UnitRunLock.Lock()
 	id, err := strconv.Atoi(this.Ctx.Input.Param(":id"))
 	if err != nil {
@@ -394,7 +394,7 @@ func (this *UnitController) Run() {
 	o.LoadRelated(unit, "Parameteres")
 
 	//向调度器索要指定数量的dockerd，用来运行container。调度器决定了container跑在哪几台机器上。
-	dockerdList := models.Scheduler.GetDockerd(unit.Number)
+	dockerdList := models.Scheduler.GetDockerd(unit.Number, nil)
 	unit.Container = make([]*core.Container, 0)
 	for _, dockerd := range dockerdList {
 		unit.Container = append(unit.Container, &core.Container{Dockerd: dockerd})

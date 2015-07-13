@@ -17,7 +17,7 @@ func init() {
 	beego.Router("/unit/create", &controllers.UnitController{}, "post:Create")
 	beego.Router("/unit/:id:int/update", &controllers.UnitController{}, "get:UpdateHtml")
 	beego.Router("/unit/:id:int/update", &controllers.UnitController{}, "post:Update")
-	beego.Router("/unit/:id:int/run", &controllers.UnitController{}, "get:Run")
+	beego.Router("/unit/:id:int/start", &controllers.UnitController{}, "get:Start")
 	beego.Router("/unit/:id:int/delete", &controllers.UnitController{}, "get:Delete")
 	beego.Router("/unit/:id:int/containers", &controllers.UnitController{}, "get:Containers")
 	beego.Router("/unit/:id:int/status", &controllers.UnitController{}, "get:Status")

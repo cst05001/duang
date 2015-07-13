@@ -5,5 +5,6 @@ import (
 )
 
 type DockerdSchedulerInterface interface {
-	GetDockerd(n int64) []*core.Dockerd
+	//n, excludeBackends
+	GetDockerd(int64, []string) []*core.Dockerd
 }

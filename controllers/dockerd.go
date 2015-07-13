@@ -114,9 +114,10 @@ func (this *DockerdController) List() {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
-	for k, _ := range dockerdList {
-		o.LoadRelated(&dockerdList[k], "Unit")
-	}
-
+	/*
+		for k, _ := range dockerdList {
+			o.LoadRelated(&dockerdList[k], "Unit")
+		}
+	*/
 	WriteJson(this.Ctx, dockerdList)
 }

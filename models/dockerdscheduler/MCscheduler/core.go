@@ -161,7 +161,7 @@ func (this *MCscheduler) UpdateScore() error {
 	return nil
 }
 
-func (this *MCscheduler) GetDockerd(n int64) []*core.Dockerd {
+func (this *MCscheduler) GetDockerd(n int64, excludeBackends []string) []*core.Dockerd {
 	this.UpdateScore()
 	i := 0
 	for i < len(this.DockerdForSortList) {
@@ -182,6 +182,21 @@ func (this *MCscheduler) GetDockerd(n int64) []*core.Dockerd {
 	dockerdList := make([]*core.Dockerd, 0)
 	i = 0
 	for k, _ := range this.DockerdForSortList {
+		// 如果在 exclude 列表，则跳过。
+		if excludeBackends != nil {
+			dockerd := dockerdList[k]
+			in := false
+			for _, exclude := range excludeBackends {
+				if dockerd.Addr == exclude {
+					in = true
+					break
+				}
+			}
+			if in == true {
+				continue
+			}
+		}
+
 		dockerdList = append(dockerdList, this.DockerdForSortList[k].Dockerd)
 		beego.Debug("GetDockerd: ", this.DockerdForSortList[k].Dockerd.GetIP(), " :\t", this.DockerdForSortList[k].Score)
 		i = i + 1
