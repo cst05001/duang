@@ -402,7 +402,8 @@ func (this *UnitController) Extend() {
 	for _, c := range unit.Container {
 		excludeBackends = append(excludeBackends, c.Dockerd.Addr)
 	}
-
+	unit.Number = unit.Number + int64(num)
+	o.Update(unit)
 	dockerdList := models.Scheduler.GetDockerd(int64(num), excludeBackends)
 
 	for _, dockerd := range dockerdList {
