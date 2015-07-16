@@ -57,7 +57,7 @@
 
 			
 			jQuery.ajax({
-				url: "/unit/update/{{$.Unit.Id}}",
+				url: "/unit/{{$.Unit.Id}}/update",
 				type: "post",
 				data: JSON.stringify(unit),
 				dataType: "json",

@@ -133,6 +133,10 @@ func (this *UnitController) Status() {
 		WriteJson(this.Ctx, &StatusError{Error: err.Error()})
 		return
 	}
+	o.LoadRelated(unit, "Container")
+	for k, _ := range unit.Container {
+		unit.Container[k].Unit = nil
+	}
 	WriteJson(this.Ctx, unit)
 }
 
